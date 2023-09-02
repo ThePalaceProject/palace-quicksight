@@ -6,7 +6,7 @@ from core.util import recursively_replace_value
 
 class ImportFromJsonOperation(BaseOperation):
     """
-    Exports a Quicksight Analysis and all it's dependencies to json files on disk
+    Imports a Quicksight template and all it's dependencies into Quicksight.  
     """
 
     def __init__(self, template_name: str, target_namespace: str, data_source_arn: str, input_dir: str, *args,
