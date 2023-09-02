@@ -46,7 +46,7 @@ cli.add_command(export_analysis)
               help='The namespace you wish to target (e.g. tpp-prod, tpp-dev, tpp-staging).')
 @click.option('--input-dir', required=True,
               help='The path to the input directory from which resources will be imported')
-def import_from_json(aws_profile: str, aws_account_id: str, template_name: str, data_source_arn: str,
+def import_template(aws_profile: str, aws_account_id: str, template_name: str, data_source_arn: str,
                      target_namespace: str, input_dir: str):
     """
     Import template and datasource files from json
@@ -64,7 +64,7 @@ def import_from_json(aws_profile: str, aws_account_id: str, template_name: str, 
                             input_dir=input_dir).execute()
 
 
-cli.add_command(import_from_json)
+cli.add_command(import_template)
 
 
 @click.command
@@ -74,7 +74,7 @@ cli.add_command(import_from_json)
 @click.option('--target-namespace', required=True,
               help='The namespace you wish to target (e.g. tpp-prod, tpp-dev, tpp-staging).')
 @click.option('--group-name', required=True, help='Name of the Quicksight User Group')
-def publish_dashboard_from_template(aws_profile: str, aws_account_id: str, template_id: str, target_namespace: str,
+def publish_dashboard(aws_profile: str, aws_account_id: str, template_id: str, target_namespace: str,
                                     group_name: str):
     """
     Create/Update a dashboard from a template
@@ -92,4 +92,4 @@ def publish_dashboard_from_template(aws_profile: str, aws_account_id: str, templ
                                           group_name=group_name).execute()
 
 
-cli.add_command(publish_dashboard_from_template)
+cli.add_command(publish_dashboard)

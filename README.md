@@ -13,9 +13,7 @@ Options:
   --help  Show this message and exit.
 
 Commands:
-  export-analysis                 Creates a template from the analysis...
-  import-from-json                Import template and datasource files...
-  publish-dashboard-from-template
-                                  Create/Update a dashboard from a template
-
+  export-analysis    Creates a template from the analysis and exports at...
+  import-template    Import template and datasource files from json
+  publish-dashboard  Create/Update a dashboard from a template
 ```
