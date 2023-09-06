@@ -18,7 +18,6 @@ class ExportAnalysisOperation(BaseOperation):
         super().__init__(*args, **kwargs)
 
     def execute(self):
-
         os.makedirs(self._resolve_path(self._output_dir, TEMPLATE_DIR), exist_ok=True)
         os.makedirs(self._resolve_path(self._output_dir, DATA_SET_DIR), exist_ok=True)
 
