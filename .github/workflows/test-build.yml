@@ -45,7 +45,7 @@ jobs:
 
       - name: Install Tox
         run: |
-          poetry install --only ci
+          poetry install 
         env:
           POETRY_VIRTUALENVS_CREATE: false
 
