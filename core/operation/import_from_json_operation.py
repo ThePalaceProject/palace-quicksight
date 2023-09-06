@@ -1,7 +1,6 @@
 import json
 
-from core.operation.baseoperation import (DATA_SET_DIR, TEMPLATE_DIR,
-                                          BaseOperation)
+from core.operation.baseoperation import DATA_SET_DIR, TEMPLATE_DIR, BaseOperation
 from core.util import recursively_replace_value
 
 

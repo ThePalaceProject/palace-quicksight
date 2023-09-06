@@ -5,9 +5,13 @@ from botocore.stub import Stubber
 
 from core.operation.export_analysis_operation import ExportAnalysisOperation
 from tests.core.operation.analysis_test_responses import (
-    create_template_response, describe_data_set_1_response,
-    describe_data_set_2_response, describe_template_definition_response,
-    get_analysis_definition_response, get_analysis_description_response)
+    create_template_response,
+    describe_data_set_1_response,
+    describe_data_set_2_response,
+    describe_template_definition_response,
+    get_analysis_definition_response,
+    get_analysis_description_response,
+)
 
 
 class TestExportAnalysisOperation:

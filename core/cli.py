@@ -5,8 +5,9 @@ import click
 
 from core.operation.export_analysis_operation import ExportAnalysisOperation
 from core.operation.import_from_json_operation import ImportFromJsonOperation
-from core.operation.publish_dashboard_from_template import \
-    PublishDashboardFromTemplateOperation
+from core.operation.publish_dashboard_from_template import (
+    PublishDashboardFromTemplateOperation,
+)
 
 log = logging.getLogger("core.cli")
 
