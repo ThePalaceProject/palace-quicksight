@@ -22,10 +22,12 @@ class TestExportAnalysisOperation:
         account = "012345678910"
 
         boto_config = Config(
-            region_name='us-east-1',
+            region_name="us-east-1",
         )
 
-        qs_client = botocore.session.get_session().create_client("quicksight", config=boto_config)
+        qs_client = botocore.session.get_session().create_client(
+            "quicksight", config=boto_config
+        )
         with Stubber(qs_client) as stub:
             analysis_description_params = {
                 "AwsAccountId": account,
