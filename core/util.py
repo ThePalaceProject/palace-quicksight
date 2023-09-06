@@ -14,6 +14,8 @@ def retry(func) -> bool:
             sleep(1)
             continue
 
+    return True
+
 
 def recursively_replace_value(mydict: dict, key: str, val: str):
     """

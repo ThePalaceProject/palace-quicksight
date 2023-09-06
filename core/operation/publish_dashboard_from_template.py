@@ -39,7 +39,7 @@ class PublishDashboardFromTemplateOperation(BaseOperation):
 
         # extract the data source placeholders
         dashboard_id = self._template_id
-        parameters = {
+        parameters: dict = {
             "AwsAccountId": self._aws_account_id,
             "Name": dashboard_id,
             "DashboardId": dashboard_id,
@@ -107,7 +107,7 @@ class PublishDashboardFromTemplateOperation(BaseOperation):
 
         response = self._qs_client.update_dashboard_permissions(**permissions_params)
 
-    def _create_or_update_dashboard(self, dashboard_params: dict) -> [str, str]:
+    def _create_or_update_dashboard(self, dashboard_params: dict) -> tuple[str, str]:
         """
         Creates new or updates existing template.
         :param dashboard_params:

@@ -14,7 +14,7 @@ class BaseOperation:
     A base class for AWS based operations.
     """
 
-    def __init__(self, qs_client: object, aws_account_id: str):
+    def __init__(self, qs_client, aws_account_id: str):
         self._aws_account_id = aws_account_id
         self._qs_client = qs_client
         self._log = logging.getLogger(self.__class__.__name__)
@@ -23,7 +23,7 @@ class BaseOperation:
     def execute(self):
         pass
 
-    def _create_or_update_template(self, template_data: dict) -> [str, str]:
+    def _create_or_update_template(self, template_data: dict) -> tuple[str, str, str]:
         """
         Creates new or updates existing template.
         :param template_data:
