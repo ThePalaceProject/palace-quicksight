@@ -7,6 +7,13 @@ readme = "README.md"
 packages = [{include = "core"}]
 repository = "https://github.com/dbernstein/palace-quicksight"
 
+[tool.poetry.group.ci.dependencies]
+dunamai = "^1.16"
+pre-commit = "^3.2"
+tox = "^4.4"
+tox-docker = "^4.1"
+tox-gh-actions = "^3.0"
+
 [tool.poetry.dependencies]
 python = "^3.10"
 boto3 = "^1.18"
