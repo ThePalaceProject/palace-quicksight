@@ -1,10 +1,7 @@
 import json
+import logging
 import os
 from abc import abstractmethod
-
-
-import boto3
-import logging
 
 ASSET_DIR = "assets"
 TEMPLATE_DIR = os.path.join(ASSET_DIR, "templates")
@@ -36,30 +33,40 @@ class BaseOperation:
             response = self._qs_client.create_template(**template_data)
         except self._qs_client.exceptions.ResourceExistsException as e:
             response = self._qs_client.update_template(**template_data)
-        httpStatus = response['ResponseMetadata']['HTTPStatusCode']
+        httpStatus = response["ResponseMetadata"]["HTTPStatusCode"]
         if httpStatus != 202:
-            self._log.error(f"Unexpected response from create_template request: {httpStatus} ")
+            self._log.error(
+                f"Unexpected response from create_template request: {httpStatus} "
+            )
             raise Exception(
-                f"Unexpected response from trying to create/update template : {json.dumps(response, indent=4)} ")
+                f"Unexpected response from trying to create/update template : {json.dumps(response, indent=4)} "
+            )
         else:
             return response["Arn"], response["VersionArn"], response["TemplateId"]
 
-    def _create_or_update_template_from_template_definition(self, template_definition: dict):
+    def _create_or_update_template_from_template_definition(
+        self, template_definition: dict
+    ):
         template_definition["AwsAccountId"] = self._aws_account_id
         return self._create_or_update_template(template_data=template_definition)
 
-    def _resolve_data_set_id_from_placeholder(self, namespace:str, placeholder:str) -> str:
+    def _resolve_data_set_id_from_placeholder(
+        self, namespace: str, placeholder: str
+    ) -> str:
         return namespace + "-" + placeholder
 
     def _get_template_definition(self, template_id):
-        return self._qs_client.describe_template_definition(AwsAccountId=self._aws_account_id, TemplateId=template_id,
-                                                            AliasName="$LATEST")
+        return self._qs_client.describe_template_definition(
+            AwsAccountId=self._aws_account_id,
+            TemplateId=template_id,
+            AliasName="$LATEST",
+        )
 
     def _describe_data_set(self, data_set_id):
-        response = self._qs_client.describe_data_set(AwsAccountId=self._aws_account_id, DataSetId=data_set_id)
-        return response['DataSet']
+        response = self._qs_client.describe_data_set(
+            AwsAccountId=self._aws_account_id, DataSetId=data_set_id
+        )
+        return response["DataSet"]
 
     def _resolve_path(self, *paths):
         return os.path.join(*paths)
-
-

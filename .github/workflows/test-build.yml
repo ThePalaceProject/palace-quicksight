@@ -45,7 +45,7 @@ jobs:
 
       - name: Install Tox
         run: |
-          poetry install 
+          poetry install
         env:
           POETRY_VIRTUALENVS_CREATE: false
 
@@ -53,4 +53,3 @@ jobs:
         run: tox
         env:
           MODULE: ${{ matrix.module }}
-

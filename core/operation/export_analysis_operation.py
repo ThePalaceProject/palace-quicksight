@@ -2,8 +2,9 @@ import json
 import os
 from typing import List
 
-from core.operation.baseoperation import BaseOperation, TEMPLATE_DIR, DATA_SET_DIR
-from core.util import retry, recursively_replace_value
+from core.operation.baseoperation import (DATA_SET_DIR, TEMPLATE_DIR,
+                                          BaseOperation)
+from core.util import recursively_replace_value, retry
 
 
 class ExportAnalysisOperation(BaseOperation):
@@ -14,7 +15,7 @@ class ExportAnalysisOperation(BaseOperation):
     def __init__(self, analysis_id: str, output_dir: str, *args, **kwargs):
         self._analysis_id = analysis_id
         self._output_dir = output_dir
-        super(ExportAnalysisOperation, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     def execute(self):
 
@@ -22,37 +23,47 @@ class ExportAnalysisOperation(BaseOperation):
         os.makedirs(self._resolve_path(self._output_dir, DATA_SET_DIR), exist_ok=True)
 
         # retrieve description
-        analysis_description = self._qs_client.describe_analysis(AwsAccountId=self._aws_account_id,
-                                                                 AnalysisId=self._analysis_id)
+        analysis_description = self._qs_client.describe_analysis(
+            AwsAccountId=self._aws_account_id, AnalysisId=self._analysis_id
+        )
         # check that analysis exists
-        https_status = analysis_description['ResponseMetadata']['HTTPStatusCode']
+        https_status = analysis_description["ResponseMetadata"]["HTTPStatusCode"]
 
         if https_status != 200:
-            self._log.error(f"Unexpected response from describe_analysis request: {https_status} ")
+            self._log.error(
+                f"Unexpected response from describe_analysis request: {https_status} "
+            )
             return
 
         # retrieve definition
-        analysis_definition = self._qs_client.describe_analysis_definition(AwsAccountId=self._aws_account_id,
-                                                                           AnalysisId=self._analysis_id)
+        analysis_definition = self._qs_client.describe_analysis_definition(
+            AwsAccountId=self._aws_account_id, AnalysisId=self._analysis_id
+        )
 
         # extract DataSet references
         analysis = analysis_description["Analysis"]
-        data_set_identifier_declarations = analysis_definition["Definition"]["DataSetIdentifierDeclarations"]
+        data_set_identifier_declarations = analysis_definition["Definition"][
+            "DataSetIdentifierDeclarations"
+        ]
 
         data_set_references = []
         for did in data_set_identifier_declarations:
-            data_set_references.append({
-                'DataSetPlaceholder': did["Identifier"],
-                'DataSetArn': did["DataSetArn"],
-            })
+            data_set_references.append(
+                {
+                    "DataSetPlaceholder": did["Identifier"],
+                    "DataSetArn": did["DataSetArn"],
+                }
+            )
 
         # create a template from the analysis
-        arn, version_arn, template_id = \
-            self._create_or_update_template_from_analysis(analysis=analysis,
-                                                          data_set_references=data_set_references)
+        arn, version_arn, template_id = self._create_or_update_template_from_analysis(
+            analysis=analysis, data_set_references=data_set_references
+        )
 
         def verify_success() -> bool:
-            self._template_definition = self._get_template_definition(template_id=template_id)
+            self._template_definition = self._get_template_definition(
+                template_id=template_id
+            )
 
             return "SUCCESSFUL" in self._template_definition["ResourceStatus"]
 
@@ -68,7 +79,9 @@ class ExportAnalysisOperation(BaseOperation):
 
         # save the template as json file
         definition_json_str = json.dumps(map_to_save, indent=4)
-        template_file = self._resolve_path(self._output_dir, TEMPLATE_DIR, self._template_definition["Name"] + ".json")
+        template_file = self._resolve_path(
+            self._output_dir, TEMPLATE_DIR, self._template_definition["Name"] + ".json"
+        )
         with open(template_file, "w") as template_file:
             template_file.write(definition_json_str)
 
@@ -80,18 +93,20 @@ class ExportAnalysisOperation(BaseOperation):
             ds_file = self._save_dataset_to_file(di=di)
             files_to_update.append(ds_file)
 
-    def _create_or_update_template_from_analysis(self, analysis, data_set_references: List):
+    def _create_or_update_template_from_analysis(
+        self, analysis, data_set_references: List
+    ):
         template_name = analysis["Name"]
         params = {
-            'AwsAccountId': self._aws_account_id,
-            'TemplateId': template_name + "-template",
-            'Name': analysis["Name"],
-            'SourceEntity': {
-                'SourceAnalysis': {
-                    'Arn': analysis['Arn'],
-                    'DataSetReferences': data_set_references,
+            "AwsAccountId": self._aws_account_id,
+            "TemplateId": template_name + "-template",
+            "Name": analysis["Name"],
+            "SourceEntity": {
+                "SourceAnalysis": {
+                    "Arn": analysis["Arn"],
+                    "DataSetReferences": data_set_references,
                 },
-            }
+            },
         }
         return self._create_or_update_template(template_data=params)
 
@@ -101,8 +116,8 @@ class ExportAnalysisOperation(BaseOperation):
         :param di: dataset map
         :return: The path of the dataset file
         """
-        identifier = di['Identifier']
-        arn = di['DataSetArn']
+        identifier = di["Identifier"]
+        arn = di["DataSetArn"]
         dataset_id = arn.split("dataset/", 1)[1]
         ds_def_elements_to_save = self._describe_data_set(dataset_id)
         # remove the following fields from the response before saving it.
@@ -115,7 +130,9 @@ class ExportAnalysisOperation(BaseOperation):
         recursively_replace_value(ds_def_elements_to_save, "DataSourceArn", "")
         # save what is left to disk
         ds_def_str = json.dumps(ds_def_elements_to_save, indent=4)
-        dataset_file = self._resolve_path(self._output_dir, DATA_SET_DIR, identifier + ".json")
+        dataset_file = self._resolve_path(
+            self._output_dir, DATA_SET_DIR, identifier + ".json"
+        )
 
         with open(dataset_file, "w") as dataset_file:
             dataset_file.write(ds_def_str)
