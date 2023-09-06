@@ -1,6 +1,7 @@
 import os
 
 import botocore
+from botocore.config import Config
 from botocore.stub import Stubber
 
 from core.operation.export_analysis_operation import ExportAnalysisOperation
@@ -20,7 +21,11 @@ class TestExportAnalysisOperation:
         output_dir = "/tmp/test-output"
         account = "012345678910"
 
-        qs_client = botocore.session.get_session().create_client("quicksight")
+        boto_config = Config(
+            region_name='us-east-1',
+        )
+
+        qs_client = botocore.session.get_session().create_client("quicksight", config=boto_config)
         with Stubber(qs_client) as stub:
             analysis_description_params = {
                 "AwsAccountId": account,
