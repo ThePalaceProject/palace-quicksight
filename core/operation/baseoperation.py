@@ -17,15 +17,10 @@ class BaseOperation:
     A base class for AWS based operations.
     """
 
-    def __init__(self, aws_profile: str, aws_account_id: str):
-        self._aws_profile = aws_profile
+    def __init__(self, qs_client: object, aws_account_id: str):
         self._aws_account_id = aws_account_id
-        self._qs_client = self._create_client()
+        self._qs_client = qs_client
         self._log = logging.getLogger(self.__class__.__name__)
-
-    def _create_client(self):
-        boto3.setup_default_session(profile_name=self._aws_profile)
-        return boto3.client('quicksight')
 
     @abstractmethod
     def execute(self):

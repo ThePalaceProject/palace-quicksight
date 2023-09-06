@@ -4,7 +4,7 @@ version = "0.1.0"
 description = ""
 authors = ["Daniel Bernstein <daniel.bernstein@lyrasis.org>"]
 readme = "README.md"
-packages = [{include = "main.py"}]
+packages = [{include = "core"}]
 repository = "https://github.com/dbernstein/palace-quicksight"
 
 [tool.poetry.dependencies]
@@ -12,7 +12,8 @@ python = "^3.10"
 boto3 = "^1.18"
 botocore = "^1.21"
 click = "^8.1.3"
-ghapi = "^1.0.4"
+pytest= ">=7.2.0"
+
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

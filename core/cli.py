@@ -1,3 +1,4 @@
+import boto3
 import click
 
 import logging
@@ -8,6 +9,10 @@ from core.operation.publish_dashboard_from_template import PublishDashboardFromT
 
 log = logging.getLogger("core.cli")
 
+
+def create_quicksight_client(aws_profile:str):
+    boto3.setup_default_session(profile_name=aws_profile)
+    return boto3.client('quicksight')
 
 @click.group()
 def cli():
@@ -22,14 +27,14 @@ def cli():
               help='The path to the output directory to which resources will be exported')
 def export_analysis(aws_profile: str, aws_account_id: str, analysis_id: str, output_dir: str):
     """
-    Creates a template from  the analysis and exports at and the dataset(s) to json.
+    Exports a template and dependent data sets based on the specified analysis to JSON files.
     """
     click.echo(f"Create version")
     click.echo(f"aws_profile = {aws_profile}")
     click.echo(f"analysis_id= {analysis_id}")
     click.echo(f"aws_account_id= {aws_account_id}")
     click.echo(f"output_dir= {output_dir}")
-    ExportAnalysisOperation(aws_profile=aws_profile, aws_account_id=aws_account_id, analysis_id=analysis_id,
+    ExportAnalysisOperation(qs_client=create_quicksight_client(aws_profile=aws_profile), aws_account_id=aws_account_id, analysis_id=analysis_id,
                             output_dir=output_dir).execute()
 
 
@@ -59,7 +64,7 @@ def import_template(aws_profile: str, aws_account_id: str, template_name: str, d
     click.echo(f"data_source_arn = {data_source_arn}")
     click.echo(f"input_dir= {input_dir}")
 
-    ImportFromJsonOperation(aws_profile=aws_profile, aws_account_id=aws_account_id, template_name=template_name,
+    ImportFromJsonOperation(qs_client=create_quicksight_client(aws_profile), aws_account_id=aws_account_id, template_name=template_name,
                             target_namespace=target_namespace, data_source_arn=data_source_arn,
                             input_dir=input_dir).execute()
 
@@ -85,7 +90,7 @@ def publish_dashboard(aws_profile: str, aws_account_id: str, template_id: str, t
     click.echo(f"aws_account_id = {aws_account_id}")
     click.echo(f"template_id = {template_id}")
     click.echo(f"group_name = {group_name}")
-    PublishDashboardFromTemplateOperation(aws_profile=aws_profile,
+    PublishDashboardFromTemplateOperation(qs_client=create_quicksight_client(aws_profile),
                                           aws_account_id=aws_account_id,
                                           template_id=template_id,
                                           target_namespace=target_namespace,

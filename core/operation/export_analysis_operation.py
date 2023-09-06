@@ -18,8 +18,8 @@ class ExportAnalysisOperation(BaseOperation):
 
     def execute(self):
 
-        os.makedirs(self._resolve_path(self._output_dir, TEMPLATE_DIR))
-        os.makedirs(self._resolve_path(self._output_dir, DATA_SET_DIR))
+        os.makedirs(self._resolve_path(self._output_dir, TEMPLATE_DIR), exist_ok=True)
+        os.makedirs(self._resolve_path(self._output_dir, DATA_SET_DIR), exist_ok=True)
 
         # retrieve description
         analysis_description = self._qs_client.describe_analysis(AwsAccountId=self._aws_account_id,
@@ -52,23 +52,23 @@ class ExportAnalysisOperation(BaseOperation):
                                                           data_set_references=data_set_references)
 
         def verify_success() -> bool:
-            template_definition = self._get_template_definition(template_id=template_id)
-            return "SUCCESSFUL" in template_definition["ResourceStatus"]
+            self._template_definition = self._get_template_definition(template_id=template_id)
+
+            return "SUCCESSFUL" in self._template_definition["ResourceStatus"]
 
         retry(verify_success)
 
         # get the newly created template definition
-        template_definition = self._get_template_definition(template_id=template_id)
         self._log.info(f"Writing template definition response to disk")
         files_to_update = []
         map_to_save = {}
         # retain only the fields we will need to restore the state.
         for i in ["Name", "Definition", "TemplateId"]:
-            map_to_save[i] = template_definition[i]
+            map_to_save[i] = self._template_definition[i]
 
         # save the template as json file
         definition_json_str = json.dumps(map_to_save, indent=4)
-        template_file = self._resolve_path(self._output_dir, TEMPLATE_DIR, template_definition["Name"] + ".json")
+        template_file = self._resolve_path(self._output_dir, TEMPLATE_DIR, self._template_definition["Name"] + ".json")
         with open(template_file, "w") as template_file:
             template_file.write(definition_json_str)
 
