@@ -5,7 +5,7 @@ Exported resources can be found [here](https://github.com/ThePalaceProject/palac
 
 ## Usage
 
-```
+```shell
 ./bin/palace-quicksight --help
 Usage: palace-quicksight [OPTIONS] COMMAND [ARGS]...
 
