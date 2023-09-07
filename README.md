@@ -3,6 +3,17 @@
 A suite of command line operations for exporting and importing quicksight dashboards from and to AWS accounts.
 Exported resources can be found [here](https://github.com/ThePalaceProject/palace-quicksight-resources).
 
+## Prerequisites
+
+Install Poetry: [Installation instructions here](https://python-poetry.org/docs/).
+
+## Installation
+
+```shell
+poetry install
+poetry run ./bin/palace-quicksight --help
+```
+
 ## Usage
 
 ```shell
