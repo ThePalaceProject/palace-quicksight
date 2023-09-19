@@ -20,7 +20,7 @@ class BaseOperation:
         self._log = logging.getLogger(self.__class__.__name__)
 
     @abstractmethod
-    def execute(self):
+    def execute(self) -> dict:
         pass
 
     def _create_or_update_template(self, template_data: dict) -> tuple[str, str, str]:

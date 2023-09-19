@@ -24,7 +24,7 @@ class ImportFromJsonOperation(BaseOperation):
         self._intput_dir = input_dir
         super().__init__(*args, **kwargs)
 
-    def execute(self):
+    def execute(self) -> dict:
         # Read template file into dictionary
         template_data = None
         template_file = self._resolve_path(
@@ -32,16 +32,6 @@ class ImportFromJsonOperation(BaseOperation):
         )
         with open(template_file) as template_file:
             template_data = json.loads(template_file.read())
-
-        # create namespace if not exists
-        # try:
-        #     self._qs_client.create_namespace(AwsAccountId=self._aws_account_id, Namespace=self._target_namespace,
-        #                                      IdentityStore="QUICKSIGHT")
-        # except self._qs_client.exceptions.ConflictException as e:
-        #     self._log.info(f"Namespace {self._target_namespace} already exists: ignoring.")
-        #
-        # namespace = self._qs_client.describe_namespace(AwsAccountId=self._aws_account_id,
-        #                                                Namespace=self._target_namespace)
 
         # create name template in namespace
         template_data["Name"] = self._target_namespace + "-" + self._template_name
@@ -56,6 +46,7 @@ class ImportFromJsonOperation(BaseOperation):
 
         # for each data set id associated with the template
         dataset_configurations = template_data["Definition"]["DataSetConfigurations"]
+        data_sets_created = []
         for di in dataset_configurations:
             # Read data set into dictionary
             dataset = None
@@ -78,9 +69,22 @@ class ImportFromJsonOperation(BaseOperation):
                 placeholder=placeholder, namespace=self._target_namespace
             )
             dataset["Name"] = dataset["Name"]
-            arn, data_set_id = self._create_or_update_data_set(
+            ds_arn, data_set_id = self._create_or_update_data_set(
                 dataset_definition=dataset
             )
+
+            data_sets_created.append(
+                {
+                    "id": data_set_id,
+                    "arn": ds_arn,
+                }
+            )
+
+        return {
+            "status": "success",
+            "data_sets": data_sets_created,
+            "template": {"id": template_id, "arn": arn, "version_arn": version_arn},
+        }
 
     def _create_or_update_data_set(self, dataset_definition: dict):
         """

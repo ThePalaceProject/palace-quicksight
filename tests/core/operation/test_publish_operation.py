@@ -1,9 +1,6 @@
-from datetime import datetime
-
 import botocore
 from botocore.config import Config
 from botocore.stub import Stubber
-from dateutil.tz import tzlocal
 
 from core.operation.publish_dashboard_from_template import (
     PublishDashboardFromTemplateOperation,
@@ -32,70 +29,12 @@ class TestPublishDashboardFromTemplateOperation:
         }
         with Stubber(qs_client) as stub:
             template_arn = f"arn:aws:quicksight:::template/{target_namespace}-library"
-
-            stub.add_response(
-                "describe_template_definition",
-                expected_params=describe_template_definition_params,
-                service_response={
-                    "ResponseMetadata": {
-                        "RequestId": "f89ac94e-34e1-4e45-9b12-c56af317e195",
-                        "HTTPStatusCode": 200,
-                        "HTTPHeaders": {
-                            "date": "Tue, 19 Sep 2023 21:58:09 GMT",
-                            "content-type": "application/json",
-                            "content-length": "172398",
-                            "connection": "keep-alive",
-                            "x-amzn-requestid": "f89ac94e-34e1-4e45-9b12-c56af317e195",
-                        },
-                        "RetryAttempts": 0,
-                    },
-                    "Status": 200,
-                    "Name": "tpp-prod-library",
-                    "TemplateId": f"{target_namespace}-library",
-                    "ResourceStatus": "CREATION_SUCCESSFUL",
-                    "Definition": {
-                        "DataSetConfigurations": [
-                            {
-                                "Placeholder": "circulation_view",
-                                "DataSetSchema": {"ColumnSchemaList": []},
-                                "ColumnGroupSchemaList": [],
-                            },
-                            {
-                                "Placeholder": "patron_events",
-                                "DataSetSchema": {"ColumnSchemaList": []},
-                                "ColumnGroupSchemaList": [],
-                            },
-                        ],
-                        "Sheets": [],
-                        "AnalysisDefaults": {
-                            "DefaultNewSheetConfiguration": {
-                                "InteractiveLayoutConfiguration": {
-                                    "Grid": {
-                                        "CanvasSizeOptions": {
-                                            "ScreenCanvasSizeOptions": {
-                                                "ResizeOption": "FIXED",
-                                                "OptimizedViewPortWidth": "1600px",
-                                            }
-                                        }
-                                    }
-                                },
-                                "SheetContentType": "INTERACTIVE",
-                            }
-                        },
-                    },
-                    "RequestId": "f89ac94e-34e1-4e45-9b12-c56af317e195",
-                },
-            )
             stub.add_response(
                 "describe_template",
                 service_response={
                     "Template": {
                         "Arn": template_arn,
-                        "Name": "tpp-prod-library",
                         "Version": {
-                            "CreatedTime": datetime(
-                                2023, 9, 19, 11, 58, 37, 288000, tzinfo=tzlocal()
-                            ),
                             "VersionNumber": 5,
                             "Status": "CREATION_SUCCESSFUL",
                             "DataSetConfigurations": [
@@ -110,15 +49,7 @@ class TestPublishDashboardFromTemplateOperation:
                                     "ColumnGroupSchemaList": [],
                                 },
                             ],
-                            "Sheets": [],
                         },
-                        "TemplateId": "tpp-prod-library",
-                        "LastUpdatedTime": datetime(
-                            2023, 9, 19, 11, 58, 37, 284000, tzinfo=tzlocal()
-                        ),
-                        "CreatedTime": datetime(
-                            2023, 9, 1, 12, 50, 43, 593000, tzinfo=tzlocal()
-                        ),
                     }
                 },
                 expected_params={"AwsAccountId": account, "TemplateId": template_id},
@@ -174,7 +105,7 @@ class TestPublishDashboardFromTemplateOperation:
                     },
                     "Arn": "arn:aws:quicksight:us-west-2:128682227026:dashboard/tpp-prod-library",
                     "VersionArn": f"arn:aws:quicksight:::dashboard/{target_namespace}-library/version/6",
-                    "DashboardId": "tpp-prod-library",
+                    "DashboardId": f"{target_namespace}-library",
                     "CreationStatus": "CREATION_IN_PROGRESS",
                     "Status": 202,
                     "RequestId": "7d276ede-baa4-4662-abb1-a917489c9e96",
@@ -259,4 +190,7 @@ class TestPublishDashboardFromTemplateOperation:
                 group_name=group_name,
             )
 
-            op.execute()
+            result = op.execute()
+
+            assert result["status"] == "success"
+            assert result["dashboard_id"] == template_id

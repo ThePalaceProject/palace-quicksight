@@ -44,12 +44,13 @@ def export_analysis(
     click.echo(f"analysis_id= {analysis_id}")
     click.echo(f"aws_account_id= {aws_account_id}")
     click.echo(f"output_dir= {output_dir}")
-    ExportAnalysisOperation(
+    result = ExportAnalysisOperation(
         qs_client=create_quicksight_client(aws_profile=aws_profile),
         aws_account_id=aws_account_id,
         analysis_id=analysis_id,
         output_dir=output_dir,
     ).execute()
+    click.echo(result)
 
 
 cli.add_command(export_analysis)
@@ -95,7 +96,7 @@ def import_template(
     click.echo(f"data_source_arn = {data_source_arn}")
     click.echo(f"input_dir= {input_dir}")
 
-    ImportFromJsonOperation(
+    result = ImportFromJsonOperation(
         qs_client=create_quicksight_client(aws_profile),
         aws_account_id=aws_account_id,
         template_name=template_name,
@@ -103,6 +104,7 @@ def import_template(
         data_source_arn=data_source_arn,
         input_dir=input_dir,
     ).execute()
+    click.echo(result)
 
 
 cli.add_command(import_template)
@@ -136,13 +138,14 @@ def publish_dashboard(
     click.echo(f"aws_account_id = {aws_account_id}")
     click.echo(f"template_id = {template_id}")
     click.echo(f"group_name = {group_name}")
-    PublishDashboardFromTemplateOperation(
+    result = PublishDashboardFromTemplateOperation(
         qs_client=create_quicksight_client(aws_profile),
         aws_account_id=aws_account_id,
         template_id=template_id,
         target_namespace=target_namespace,
         group_name=group_name,
     ).execute()
+    click.echo(result)
 
 
 cli.add_command(publish_dashboard)

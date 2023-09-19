@@ -17,12 +17,7 @@ class PublishDashboardFromTemplateOperation(BaseOperation):
         self._group_name = group_name
         super().__init__(*args, **kwargs)
 
-    def execute(self):
-        # get the template definition
-        template_def = self._get_template_definition(template_id=self._template_id)[
-            "Definition"
-        ]
-
+    def execute(self) -> dict:
         desc_template_params = {
             "AwsAccountId": self._aws_account_id,
             "TemplateId": self._template_id,
@@ -53,7 +48,7 @@ class PublishDashboardFromTemplateOperation(BaseOperation):
         ]
 
         # for each data set config
-        for dsr in template_def["DataSetConfigurations"]:
+        for dsr in template["Version"]["DataSetConfigurations"]:
             # resolve the dataset arn
             placeholder = dsr["Placeholder"]
             data_set_id = self._resolve_data_set_id_from_placeholder(
@@ -114,6 +109,12 @@ class PublishDashboardFromTemplateOperation(BaseOperation):
             raise Exception(
                 f"Unexpected response from trying to update_dashboard_permissions : {json.dumps(response, indent=4)} "
             )
+
+        return {
+            "status": "success",
+            "dashboard_arn": dashboard_arn,
+            "dashboard_id": dashboard_id,
+        }
 
     def _create_or_update_dashboard(self, dashboard_params: dict) -> tuple[str, str]:
         """

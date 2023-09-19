@@ -109,7 +109,9 @@ class TestExportAnalysisOperation:
                 aws_account_id=account,
             )
 
-            op.execute()
+            results = op.execute()
+
+        assert results["status"] == "success"
 
         assets_dir = os.path.join(output_dir, "assets")
         data_sets_dir = os.path.join(assets_dir, "data-sets")

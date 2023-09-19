@@ -16,7 +16,7 @@ class ExportAnalysisOperation(BaseOperation):
         self._output_dir = output_dir
         super().__init__(*args, **kwargs)
 
-    def execute(self):
+    def execute(self) -> dict:
         os.makedirs(self._resolve_path(self._output_dir, TEMPLATE_DIR), exist_ok=True)
         os.makedirs(self._resolve_path(self._output_dir, DATA_SET_DIR), exist_ok=True)
 
@@ -29,7 +29,7 @@ class ExportAnalysisOperation(BaseOperation):
 
         if https_status != 200:
             self._log.error(
-                f"Unexpected response from describe_analysis request: {https_status} "
+                f"Unexpected response from describe_analysis request: {https_status}"
             )
             return
 
@@ -77,19 +77,21 @@ class ExportAnalysisOperation(BaseOperation):
 
         # save the template as json file
         definition_json_str = json.dumps(map_to_save, indent=4)
-        template_file = self._resolve_path(
+        template_file_path = self._resolve_path(
             self._output_dir, TEMPLATE_DIR, self._template_definition["Name"] + ".json"
         )
-        with open(template_file, "w") as template_file:
+        with open(template_file_path, "w") as template_file:
             template_file.write(definition_json_str)
 
-        files_to_update.append(template_file)
+        files_to_update.append(template_file_path)
 
         # for each dataset declaration identifiers
         for di in data_set_identifier_declarations:
             # save to json file
             ds_file = self._save_dataset_to_file(di=di)
             files_to_update.append(ds_file)
+
+        return {"status": "success", "files_exported": files_to_update}
 
     def _create_or_update_template_from_analysis(
         self, analysis, data_set_references: List
@@ -128,11 +130,11 @@ class ExportAnalysisOperation(BaseOperation):
         recursively_replace_value(ds_def_elements_to_save, "DataSourceArn", "")
         # save what is left to disk
         ds_def_str = json.dumps(ds_def_elements_to_save, indent=4)
-        dataset_file = self._resolve_path(
+        dataset_file_path = self._resolve_path(
             self._output_dir, DATA_SET_DIR, identifier + ".json"
         )
 
-        with open(dataset_file, "w") as dataset_file:
+        with open(dataset_file_path, "w") as dataset_file:
             dataset_file.write(ds_def_str)
 
-        return dataset_file
+        return dataset_file_path

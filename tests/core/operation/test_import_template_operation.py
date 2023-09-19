@@ -216,4 +216,5 @@ class TestImportTemplateOperation:
                 data_source_arn=data_source_arn,
             )
 
-            op.execute()
+            result = op.execute()
+            assert result["status"] == "success"
