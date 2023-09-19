@@ -10,7 +10,7 @@ class PublishDashboardFromTemplateOperation(BaseOperation):
     """
 
     def __init__(
-        self, template_id: str, target_namespace: str, group_name, *args, **kwargs
+        self, template_id: str, target_namespace: str, group_name: str, *args, **kwargs
     ):
         self._template_id = template_id
         self._target_namespace = target_namespace
@@ -106,6 +106,14 @@ class PublishDashboardFromTemplateOperation(BaseOperation):
         }
 
         response = self._qs_client.update_dashboard_permissions(**permissions_params)
+        httpStatus = response["ResponseMetadata"]["HTTPStatusCode"]
+        if httpStatus != 202 and httpStatus != 200:
+            self._log.error(
+                f"Unexpected response from update_dashboard_permissions request: {httpStatus} "
+            )
+            raise Exception(
+                f"Unexpected response from trying to update_dashboard_permissions : {json.dumps(response, indent=4)} "
+            )
 
     def _create_or_update_dashboard(self, dashboard_params: dict) -> tuple[str, str]:
         """
