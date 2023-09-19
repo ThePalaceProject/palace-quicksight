@@ -28,6 +28,7 @@ class TestExportAnalysisOperation:
         qs_client = botocore.session.get_session().create_client(
             "quicksight", config=boto_config
         )
+
         with Stubber(qs_client) as stub:
             analysis_description_params = {
                 "AwsAccountId": account,
