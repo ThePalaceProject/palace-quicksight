@@ -9,6 +9,17 @@ from core.operation.publish_dashboard_from_template import (
     PublishDashboardFromTemplateOperation,
 )
 
+
+logging.basicConfig(
+    level=logging.DEBUG,
+    format="%(asctime)s [%(levelname)s] %(message)s",
+    handlers=[
+        logging.FileHandler("palace-quicksight.log"),
+        logging.StreamHandler()
+    ]
+)
+
+
 log = logging.getLogger("core.cli")
 
 
@@ -39,18 +50,18 @@ def export_analysis(
     """
     Exports a template and dependent data sets based on the specified analysis to JSON files.
     """
-    click.echo(f"Create version")
-    click.echo(f"aws_profile = {aws_profile}")
-    click.echo(f"analysis_id= {analysis_id}")
-    click.echo(f"aws_account_id= {aws_account_id}")
-    click.echo(f"output_dir= {output_dir}")
+    log.info(f"Create version")
+    log.info(f"aws_profile = {aws_profile}")
+    log.info(f"analysis_id= {analysis_id}")
+    log.info(f"aws_account_id={aws_account_id}")
+    log.info(f"output_dir={output_dir}")
     result = ExportAnalysisOperation(
         qs_client=create_quicksight_client(aws_profile=aws_profile),
         aws_account_id=aws_account_id,
         analysis_id=analysis_id,
         output_dir=output_dir,
     ).execute()
-    click.echo(result)
+    log.info(result)
 
 
 cli.add_command(export_analysis)
@@ -89,12 +100,12 @@ def import_template(
     Import template and datasource files from json
     """
 
-    click.echo(f"import_from_json")
-    click.echo(f"aws_profile = {aws_profile}")
-    click.echo(f"aws_account_id = {aws_account_id}")
-    click.echo(f"template_name = {template_name}")
-    click.echo(f"data_source_arn = {data_source_arn}")
-    click.echo(f"input_dir= {input_dir}")
+    log.info(f"import_from_json")
+    log.info(f"aws_profile = {aws_profile}")
+    log.info(f"aws_account_id = {aws_account_id}")
+    log.info(f"template_name = {template_name}")
+    log.info(f"data_source_arn = {data_source_arn}")
+    log.info(f"input_dir= {input_dir}")
 
     result = ImportFromJsonOperation(
         qs_client=create_quicksight_client(aws_profile),
@@ -104,7 +115,7 @@ def import_template(
         data_source_arn=data_source_arn,
         input_dir=input_dir,
     ).execute()
-    click.echo(result)
+    log.info(result)
 
 
 cli.add_command(import_template)
@@ -133,11 +144,11 @@ def publish_dashboard(
     Create/Update a dashboard from a template
     """
 
-    click.echo(f"publish dashboard from template")
-    click.echo(f"aws_profile = {aws_profile}")
-    click.echo(f"aws_account_id = {aws_account_id}")
-    click.echo(f"template_id = {template_id}")
-    click.echo(f"group_name = {group_name}")
+    log.info(f"publish dashboard from template")
+    log.info(f"aws_profile = {aws_profile}")
+    log.info(f"aws_account_id = {aws_account_id}")
+    log.info(f"template_id = {template_id}")
+    log.info(f"group_name = {group_name}")
     result = PublishDashboardFromTemplateOperation(
         qs_client=create_quicksight_client(aws_profile),
         aws_account_id=aws_account_id,
@@ -145,7 +156,7 @@ def publish_dashboard(
         target_namespace=target_namespace,
         group_name=group_name,
     ).execute()
-    click.echo(result)
+    log.info(result)
 
 
 cli.add_command(publish_dashboard)

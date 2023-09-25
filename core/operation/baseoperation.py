@@ -33,10 +33,10 @@ class BaseOperation:
             response = self._qs_client.create_template(**template_data)
         except self._qs_client.exceptions.ResourceExistsException as e:
             response = self._qs_client.update_template(**template_data)
-        httpStatus = response["ResponseMetadata"]["HTTPStatusCode"]
-        if httpStatus != 202:
+        http_status = response["ResponseMetadata"]["HTTPStatusCode"]
+        if http_status != 202:
             self._log.error(
-                f"Unexpected response from create_template request: {httpStatus} "
+                f"Unexpected response from create_template request: {http_status} "
             )
             raise Exception(
                 f"Unexpected response from trying to create/update template : {json.dumps(response, indent=4)} "

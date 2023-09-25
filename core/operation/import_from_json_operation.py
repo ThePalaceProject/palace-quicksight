@@ -95,11 +95,12 @@ class ImportFromJsonOperation(BaseOperation):
         try:
             response = self._qs_client.create_data_set(**dataset_definition)
         except self._qs_client.exceptions.ResourceExistsException as e:
+
             response = self._qs_client.update_data_set(**dataset_definition)
-        httpStatus = response["ResponseMetadata"]["HTTPStatusCode"]
-        if httpStatus != 201 and httpStatus != 200:
+        http_status = response["ResponseMetadata"]["HTTPStatusCode"]
+        if http_status != 201 and http_status != 200:
             self._log.error(
-                f"Unexpected response from create_dataset request: {httpStatus} "
+                f"Unexpected response from create_dataset request: {http_status} "
             )
             raise Exception(
                 f"Unexpected response from trying to create/update dataset : {json.dumps(response, indent=4)} "

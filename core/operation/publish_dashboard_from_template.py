@@ -101,8 +101,8 @@ class PublishDashboardFromTemplateOperation(BaseOperation):
         }
 
         response = self._qs_client.update_dashboard_permissions(**permissions_params)
-        httpStatus = response["ResponseMetadata"]["HTTPStatusCode"]
-        if httpStatus != 202 and httpStatus != 200:
+        http_status = response["ResponseMetadata"]["HTTPStatusCode"]
+        if http_status != 202 and http_status != 200:
             self._log.error(
                 f"Unexpected response from update_dashboard_permissions request: {httpStatus} "
             )
@@ -126,8 +126,8 @@ class PublishDashboardFromTemplateOperation(BaseOperation):
             response = self._qs_client.create_dashboard(**dashboard_params)
         except self._qs_client.exceptions.ResourceExistsException as e:
             response = self._qs_client.update_dashboard(**dashboard_params)
-        httpStatus = response["ResponseMetadata"]["HTTPStatusCode"]
-        if httpStatus != 202 and httpStatus != 200:
+        http_status = response["ResponseMetadata"]["HTTPStatusCode"]
+        if http_status != 202 and http_status != 200:
             self._log.error(
                 f"Unexpected response from create_template request: {httpStatus} "
             )
