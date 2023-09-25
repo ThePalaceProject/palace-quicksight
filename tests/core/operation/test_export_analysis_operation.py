@@ -1,4 +1,5 @@
 import os
+import tempfile
 
 import botocore
 from botocore.config import Config
@@ -18,7 +19,7 @@ from tests.core.operation.analysis_test_responses import (
 class TestExportAnalysisOperation:
     def test(self):
         analysis_id = "my-quicksight-analysis-id"
-        output_dir = "/tmp/test-output"
+        output_dir = tempfile.NamedTemporaryFile().name
         account = "012345678910"
 
         boto_config = Config(

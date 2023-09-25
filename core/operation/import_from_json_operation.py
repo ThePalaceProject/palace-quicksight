@@ -29,14 +29,14 @@ class ImportFromJsonOperation(BaseOperation):
         self._template_name = template_name
         self._target_namespace = target_namespace
         self._data_source_arn = data_source_arn
-        self._intput_dir = input_dir
+        self._input_dir = input_dir
         super().__init__(*args, **kwargs)
 
     def execute(self) -> dict:
         # Read template file into dictionary
         template_data = None
         template_file = self._resolve_path(
-            self._intput_dir, TEMPLATE_DIR, self._template_name + ".json"
+            self._input_dir, TEMPLATE_DIR, self._template_name + ".json"
         )
         with open(template_file) as template_file:
             template_data = json.loads(template_file.read())
@@ -56,7 +56,7 @@ class ImportFromJsonOperation(BaseOperation):
             dataset = None
             placeholder = di["Placeholder"]
             dataset_filename = self._resolve_path(
-                self._intput_dir, DATA_SET_DIR, placeholder + ".json"
+                self._input_dir, DATA_SET_DIR, placeholder + ".json"
             )
             with open(dataset_filename) as dataset_file:
                 dataset = json.loads(dataset_file.read())
