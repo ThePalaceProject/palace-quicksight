@@ -69,6 +69,15 @@ class TestExportAnalysisOperation:
             }
 
             stub.add_response(
+                "delete_template",
+                service_response={},
+                expected_params={
+                    "TemplateId": "library-template",
+                    "AwsAccountId": account,
+                },
+            )
+
+            stub.add_response(
                 "create_template",
                 service_response=create_template_response(),
                 expected_params=create_template_params,

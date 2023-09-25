@@ -104,7 +104,7 @@ class PublishDashboardFromTemplateOperation(BaseOperation):
         http_status = response["ResponseMetadata"]["HTTPStatusCode"]
         if http_status != 202 and http_status != 200:
             self._log.error(
-                f"Unexpected response from update_dashboard_permissions request: {httpStatus} "
+                f"Unexpected response from update_dashboard_permissions request: {http_status} "
             )
             raise Exception(
                 f"Unexpected response from trying to update_dashboard_permissions : {json.dumps(response, indent=4)} "
@@ -129,7 +129,7 @@ class PublishDashboardFromTemplateOperation(BaseOperation):
         http_status = response["ResponseMetadata"]["HTTPStatusCode"]
         if http_status != 202 and http_status != 200:
             self._log.error(
-                f"Unexpected response from create_template request: {httpStatus} "
+                f"Unexpected response from create_template request: {http_status} "
             )
             raise Exception(
                 f"Unexpected response from trying to create/update template : {json.dumps(response, indent=4)} "

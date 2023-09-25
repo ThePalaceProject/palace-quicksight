@@ -1,4 +1,5 @@
 import json
+import time
 from dataclasses import dataclass
 
 from core.operation.baseoperation import DATA_SET_DIR, TEMPLATE_DIR, BaseOperation
@@ -97,11 +98,23 @@ class ImportFromJsonOperation(BaseOperation):
         :param dataset_definition:
         :return: DataSet ARN and DataSet Id
         """
-        try:
-            response = self._qs_client.create_data_set(**dataset_definition)
-        except self._qs_client.exceptions.ResourceExistsException as e:
 
-            response = self._qs_client.update_data_set(**dataset_definition)
+        try:
+            self._qs_client.delete_data_set(
+                **{
+                    "DataSetId": dataset_definition["DataSetId"],
+                    "AwsAccountId": dataset_definition["AwsAccountId"],
+                }
+            )
+
+            # there can be some latency between the completion of the deletion command
+            # and the complete backend deletion operation.
+            time.sleep(3)
+
+        except self._qs_client.exceptions.ResourceNotFoundException as e:
+            pass
+
+        response = self._qs_client.create_data_set(**dataset_definition)
         http_status = response["ResponseMetadata"]["HTTPStatusCode"]
         if http_status != 201 and http_status != 200:
             self._log.error(

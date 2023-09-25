@@ -33,10 +33,11 @@ class ExportAnalysisOperation(BaseOperation):
         https_status = analysis_description["ResponseMetadata"]["HTTPStatusCode"]
 
         if https_status != 200:
-            self._log.error(
+            message = (
                 f"Unexpected response from describe_analysis request: {https_status}"
             )
-            return
+            self._log.error(message)
+            raise Exception(message)
 
         # retrieve definition
         analysis_definition = self._qs_client.describe_analysis_definition(

@@ -6,7 +6,6 @@ from core.operation.import_from_json_operation import ImportFromJsonOperation
 
 
 def create_data_set_response(target_namespace, data_set_name):
-    new_ds_name = f"{target_namespace}-{data_set_name}"
     response = {
         "ResponseMetadata": {
             "RequestId": "3aecd4ed-9a15-408a-a251-532718e574bd",
@@ -21,8 +20,8 @@ def create_data_set_response(target_namespace, data_set_name):
             "RetryAttempts": 0,
         },
         "Status": 200,
-        "Arn": f"arn:aws:quicksight:us-west-2:128682227026:dataset/{new_ds_name}",
-        "DataSetId": new_ds_name,
+        "Arn": f"arn:aws:quicksight:us-west-2:128682227026:dataset/{data_set_name}",
+        "DataSetId": data_set_name,
         "RequestId": "3aecd4ed-9a15-408a-a251-532718e574bd",
     }
     return response
@@ -163,6 +162,10 @@ def create_template_response(new_template_name):
     }
 
 
+def create_new_dataset_name(target_namespace: str, data_set_name: str) -> str:
+    return f"{target_namespace}-{data_set_name}"
+
+
 class TestImportTemplateOperation:
     def test(self):
         template_name = "library"
@@ -181,27 +184,59 @@ class TestImportTemplateOperation:
             "quicksight", config=boto_config
         )
         with Stubber(qs_client) as stub:
+
+            stub.add_response(
+                "delete_template",
+                service_response={},
+                expected_params={
+                    "TemplateId": new_template_name,
+                    "AwsAccountId": account,
+                },
+            )
+
             stub.add_response(
                 "create_template",
                 service_response=create_template_response(new_template_name),
                 expected_params=create_template_params(target_namespace, account),
             )
 
+            ds1_name = create_new_dataset_name(
+                target_namespace=target_namespace, data_set_name="circulation_view"
+            )
+
+            stub.add_response(
+                "delete_data_set",
+                service_response={},
+                expected_params={
+                    "DataSetId": ds1_name,
+                    "AwsAccountId": account,
+                },
+            )
+
             stub.add_response(
                 "create_data_set",
-                service_response=create_data_set_response(
-                    target_namespace, "circulation_view"
-                ),
+                service_response=create_data_set_response(target_namespace, ds1_name),
                 expected_params=create_data_set_params1(
                     input_dir, target_namespace, data_source_arn, account
                 ),
             )
 
+            ds2_name = create_new_dataset_name(
+                target_namespace=target_namespace, data_set_name="patron_events"
+            )
+
+            stub.add_response(
+                "delete_data_set",
+                service_response={},
+                expected_params={
+                    "DataSetId": ds2_name,
+                    "AwsAccountId": account,
+                },
+            )
+
             stub.add_response(
                 "create_data_set",
-                service_response=create_data_set_response(
-                    target_namespace, "patron_events"
-                ),
+                service_response=create_data_set_response(target_namespace, ds2_name),
                 expected_params=create_data_set_params2(
                     input_dir, target_namespace, data_source_arn, account
                 ),

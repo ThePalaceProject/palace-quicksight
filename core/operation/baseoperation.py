@@ -1,6 +1,7 @@
 import json
 import logging
 import os
+import time
 from abc import abstractmethod
 from dataclasses import dataclass
 
@@ -17,7 +18,6 @@ class TemplateResponse:
 
 
 class BaseOperation:
-
     """
     A base class for AWS based operations.
     """
@@ -37,12 +37,23 @@ class BaseOperation:
         :param template_data:
         :return: Template ARN, Template Version ARN, and the Template ID
         """
-        local_template_data = template_data.copy()
 
         try:
-            response = self._qs_client.create_template(**local_template_data)
-        except self._qs_client.exceptions.ResourceExistsException as e:
-            response = self._qs_client.update_template(**template_data)
+            self._qs_client.delete_template(
+                **{
+                    "TemplateId": template_data["TemplateId"],
+                    "AwsAccountId": template_data["AwsAccountId"],
+                }
+            )
+
+            # there can be some latency between the completion of the deletion command
+            # and the complete backend deletion operation.
+            time.sleep(3)
+
+        except self._qs_client.exceptions.ResourceNotFoundException as e:
+            pass
+
+        response = self._qs_client.create_template(**template_data)
 
         http_status = response["ResponseMetadata"]["HTTPStatusCode"]
         if http_status != 202:
