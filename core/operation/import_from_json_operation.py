@@ -41,7 +41,7 @@ class ImportFromJsonOperation(BaseOperation):
         with open(template_file) as template_file:
             template_data = json.loads(template_file.read())
 
-        # create name template in namespace
+        # create or update template
         template_data["Name"] = self._target_namespace + "-" + self._template_name
         template_data["TemplateId"] = template_data["Name"]
         template_response = self._create_or_update_template_from_template_definition(
