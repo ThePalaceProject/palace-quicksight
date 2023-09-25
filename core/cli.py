@@ -9,14 +9,10 @@ from core.operation.publish_dashboard_from_template import (
     PublishDashboardFromTemplateOperation,
 )
 
-
 logging.basicConfig(
     level=logging.DEBUG,
     format="%(asctime)s [%(levelname)s] %(message)s",
-    handlers=[
-        logging.FileHandler("palace-quicksight.log"),
-        logging.StreamHandler()
-    ]
+    handlers=[logging.FileHandler("palace-quicksight.log"), logging.StreamHandler()],
 )
 
 

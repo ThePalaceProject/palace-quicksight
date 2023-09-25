@@ -1,7 +1,14 @@
 import json
+from dataclasses import dataclass
 
 from core.operation.baseoperation import DATA_SET_DIR, TEMPLATE_DIR, BaseOperation
 from core.util import recursively_replace_value
+
+
+@dataclass
+class DataSetResponse:
+    arn: str
+    data_set_id: str
 
 
 class ImportFromJsonOperation(BaseOperation):
@@ -36,11 +43,7 @@ class ImportFromJsonOperation(BaseOperation):
         # create name template in namespace
         template_data["Name"] = self._target_namespace + "-" + self._template_name
         template_data["TemplateId"] = template_data["Name"]
-        (
-            arn,
-            version_arn,
-            template_id,
-        ) = self._create_or_update_template_from_template_definition(
+        template_response = self._create_or_update_template_from_template_definition(
             template_definition=template_data
         )
 
@@ -69,21 +72,23 @@ class ImportFromJsonOperation(BaseOperation):
                 placeholder=placeholder, namespace=self._target_namespace
             )
             dataset["Name"] = dataset["Name"]
-            ds_arn, data_set_id = self._create_or_update_data_set(
-                dataset_definition=dataset
-            )
+            ds_response = self._create_or_update_data_set(dataset_definition=dataset)
 
             data_sets_created.append(
                 {
-                    "id": data_set_id,
-                    "arn": ds_arn,
+                    "id": ds_response.data_set_id,
+                    "arn": ds_response.arn,
                 }
             )
 
         return {
             "status": "success",
             "data_sets": data_sets_created,
-            "template": {"id": template_id, "arn": arn, "version_arn": version_arn},
+            "template": {
+                "id": template_response.template_id,
+                "arn": template_response.arn,
+                "version_arn": template_response.version_arn,
+            },
         }
 
     def _create_or_update_data_set(self, dataset_definition: dict):
@@ -106,4 +111,4 @@ class ImportFromJsonOperation(BaseOperation):
                 f"Unexpected response from trying to create/update dataset : {json.dumps(response, indent=4)} "
             )
         else:
-            return response["Arn"], response["DataSetId"]
+            return DataSetResponse(response["Arn"], response["DataSetId"])

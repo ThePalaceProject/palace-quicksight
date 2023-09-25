@@ -2,7 +2,12 @@ import json
 import os
 from typing import List
 
-from core.operation.baseoperation import DATA_SET_DIR, TEMPLATE_DIR, BaseOperation
+from core.operation.baseoperation import (
+    DATA_SET_DIR,
+    TEMPLATE_DIR,
+    BaseOperation,
+    TemplateResponse,
+)
 from core.util import recursively_replace_value, retry
 
 
@@ -54,13 +59,13 @@ class ExportAnalysisOperation(BaseOperation):
             )
 
         # create a template from the analysis
-        arn, version_arn, template_id = self._create_or_update_template_from_analysis(
+        template_response = self._create_or_update_template_from_analysis(
             analysis=analysis, data_set_references=data_set_references
         )
 
         def verify_success() -> bool:
             self._template_definition = self._get_template_definition(
-                template_id=template_id
+                template_id=template_response.template_id
             )
 
             return "SUCCESSFUL" in self._template_definition["ResourceStatus"]
@@ -95,7 +100,7 @@ class ExportAnalysisOperation(BaseOperation):
 
     def _create_or_update_template_from_analysis(
         self, analysis, data_set_references: List
-    ):
+    ) -> TemplateResponse:
         template_name = analysis["Name"]
         params = {
             "AwsAccountId": self._aws_account_id,
