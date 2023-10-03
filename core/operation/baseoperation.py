@@ -38,10 +38,13 @@ class BaseOperation:
         :return: Template ARN, Template Version ARN, and the Template ID
         """
 
+        template_id = template_data["TemplateId"]
         try:
+            self._log.info(f"ready to delete template ({template_id}) if exists.")
+
             self._qs_client.delete_template(
                 **{
-                    "TemplateId": template_data["TemplateId"],
+                    "TemplateId": template_id,
                     "AwsAccountId": template_data["AwsAccountId"],
                 }
             )
@@ -49,21 +52,26 @@ class BaseOperation:
             # there can be some latency between the completion of the deletion command
             # and the complete backend deletion operation.
             time.sleep(3)
+            self._log.info(f"template ({template_id}) deletion complete.")
 
         except self._qs_client.exceptions.ResourceNotFoundException as e:
-            pass
+            self._log.info(f"template ({template_id}) not found: no deletion needed.")
 
         response = self._qs_client.create_template(**template_data)
 
         http_status = response["ResponseMetadata"]["HTTPStatusCode"]
         if http_status != 202:
             self._log.error(
-                f"Unexpected response from create_template request: {http_status} "
+                f"Unexpected response from create_template request: "
+                f"template_id = {template_id}, http_status = {http_status}"
             )
             raise Exception(
                 f"Unexpected response from trying to create/update template : {json.dumps(response, indent=4)} "
             )
         else:
+            self._log.info(
+                f"Template ({template_id}) created successfully: http_status = {http_status}"
+            )
             return TemplateResponse(
                 response["Arn"], response["VersionArn"], response["TemplateId"]
             )

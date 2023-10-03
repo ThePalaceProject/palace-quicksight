@@ -99,10 +99,12 @@ class ImportFromJsonOperation(BaseOperation):
         :return: DataSet ARN and DataSet Id
         """
 
+        data_set_id = dataset_definition["DataSetId"]
         try:
+            self._log.info(f"ready to delete data set ({data_set_id}) if exists.")
             self._qs_client.delete_data_set(
                 **{
-                    "DataSetId": dataset_definition["DataSetId"],
+                    "DataSetId": data_set_id,
                     "AwsAccountId": dataset_definition["AwsAccountId"],
                 }
             )
@@ -110,18 +112,26 @@ class ImportFromJsonOperation(BaseOperation):
             # there can be some latency between the completion of the deletion command
             # and the complete backend deletion operation.
             time.sleep(3)
+            self._log.info(f"Deletion complete for {data_set_id}.")
 
         except self._qs_client.exceptions.ResourceNotFoundException as e:
-            pass
+            self._log.info(
+                f"No deletion necessary: data set {data_set_id} does not exist."
+            )
 
         response = self._qs_client.create_data_set(**dataset_definition)
         http_status = response["ResponseMetadata"]["HTTPStatusCode"]
         if http_status != 201 and http_status != 200:
             self._log.error(
-                f"Unexpected response from create_dataset request: {http_status} "
+                f"Unexpected response from create_dataset request: "
+                f"data_set_id = {data_set_id}, http_status = {http_status}"
             )
             raise Exception(
                 f"Unexpected response from trying to create/update dataset : {json.dumps(response, indent=4)} "
             )
         else:
+            self._log.info(
+                f"Data set ({data_set_id}) created successfully: http_status = {http_status}"
+            )
+
             return DataSetResponse(response["Arn"], response["DataSetId"])
