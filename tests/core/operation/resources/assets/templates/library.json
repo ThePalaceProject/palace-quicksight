@@ -1,0 +1,40 @@
+{
+    "Name": "library",
+    "Definition": {
+        "DataSetConfigurations": [
+            {
+                "Placeholder": "circulation_view",
+                "DataSetSchema": {
+                    "ColumnSchemaList": [
+                    ]
+                },
+                "ColumnGroupSchemaList": []
+            },
+            {
+                "Placeholder": "patron_events",
+                "DataSetSchema": {
+                    "ColumnSchemaList": [
+                    ]
+                },
+                "ColumnGroupSchemaList": []
+            }
+        ],
+        "Sheets": [],
+        "AnalysisDefaults": {
+            "DefaultNewSheetConfiguration": {
+                "InteractiveLayoutConfiguration": {
+                    "Grid": {
+                        "CanvasSizeOptions": {
+                            "ScreenCanvasSizeOptions": {
+                                "ResizeOption": "FIXED",
+                                "OptimizedViewPortWidth": "1600px"
+                            }
+                        }
+                    }
+                },
+                "SheetContentType": "INTERACTIVE"
+            }
+        }
+    },
+    "TemplateId": "library-template"
+}

@@ -1,0 +1,48 @@
+{
+    "Name": "patron_events",
+    "PhysicalTableMap": {
+        "50873ea6-0c3a-4989-97e1-eb740e8a3348": {
+            "CustomSql": {
+                "DataSourceArn": "",
+                "Name": "patron_events",
+                "SqlQuery": "sql query",
+                "Columns": [
+                    {
+                        "Name": "time_stamp",
+                        "Type": "DATETIME"
+                    }
+                ]
+            }
+        }
+    },
+    "LogicalTableMap": {
+        "4dc4e51c-76b2-4595-8b3b-1759f76a05c4": {
+            "Alias": "patron_events",
+            "DataTransforms": [
+                {
+                    "ProjectOperation": {
+                        "ProjectedColumns": [
+                            "time_stamp"
+                        ]
+                    }
+                }
+            ],
+            "Source": {
+                "PhysicalTableId": "50873ea6-0c3a-4989-97e1-eb740e8a3348"
+            }
+        }
+    },
+    "OutputColumns": [
+        {
+            "Name": "time_stamp",
+            "Type": "DATETIME"
+        }
+    ],
+    "ImportMode": "DIRECT_QUERY",
+    "ConsumedSpiceCapacityInBytes": 0,
+    "FieldFolders": {},
+    "DataSetUsageConfiguration": {
+        "DisableUseAsDirectQuerySource": false,
+        "DisableUseAsImportedSource": false
+    }
+}

@@ -1,0 +1,55 @@
+name: Test & Build
+on: [push, pull_request]
+
+concurrency:
+  group: test-build-${{ github.ref_name }}-${{ github.event_name }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: ${{ matrix.module }} Tests (Py ${{ matrix.python-version }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.9", "3.10", "3.11"]
+        module: [Core]
+
+    # We want to run on external PRs, but not on our own internal PRs as they'll be run
+    # by the push to the branch. This prevents duplicated runs on internal PRs.
+    # Some discussion of this here:
+    # https://github.community/t/duplicate-checks-on-push-and-pull-request-simultaneous-event/18012
+    if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name != github.repository
+
+    steps:
+      - uses: actions/checkout@v3
+
+      # See comment here: https://github.com/actions/runner-images/issues/1187#issuecomment-686735760
+      - name: Disable network offload
+        run: sudo ethtool -K eth0 tx off rx off
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install Apt Packages
+        run: |
+          sudo apt-get update
+
+      - name: Install Poetry
+        uses: ./.github/actions/poetry
+
+      - name: Install Tox
+        run: |
+          poetry install --only ci
+        env:
+          POETRY_VIRTUALENVS_CREATE: false
+
+      - name: Run Tests
+        run: tox
+        env:
+          MODULE: ${{ matrix.module }}

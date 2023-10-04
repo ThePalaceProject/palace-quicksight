@@ -1,0 +1,48 @@
+{
+    "Name": "circulation_view",
+    "PhysicalTableMap": {
+        "25046cd8-e08f-41e0-8af8-5259b64499fd": {
+            "CustomSql": {
+                "DataSourceArn": "",
+                "Name": "circulation_view",
+                "SqlQuery": "sql query",
+                "Columns": [
+                    {
+                        "Name": "time_stamp",
+                        "Type": "DATETIME"
+                    }
+                ]
+            }
+        }
+    },
+    "LogicalTableMap": {
+        "6c80275e-d03d-417c-a8cd-57d93e58129b": {
+            "Alias": "circulation_view",
+            "DataTransforms": [
+                {
+                    "ProjectOperation": {
+                        "ProjectedColumns": [
+                            "time_stamp"
+                        ]
+                    }
+                }
+            ],
+            "Source": {
+                "PhysicalTableId": "25046cd8-e08f-41e0-8af8-5259b64499fd"
+            }
+        }
+    },
+    "OutputColumns": [
+        {
+            "Name": "time_stamp",
+            "Type": "DATETIME"
+        }
+    ],
+    "ImportMode": "DIRECT_QUERY",
+    "ConsumedSpiceCapacityInBytes": 0,
+    "FieldFolders": {},
+    "DataSetUsageConfiguration": {
+        "DisableUseAsDirectQuerySource": false,
+        "DisableUseAsImportedSource": false
+    }
+}
