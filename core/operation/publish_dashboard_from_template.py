@@ -10,11 +10,18 @@ class PublishDashboardFromTemplateOperation(BaseOperation):
     """
 
     def __init__(
-        self, template_id: str, target_namespace: str, group_name: str, *args, **kwargs
+        self,
+        template_id: str,
+        target_namespace: str,
+        group_name: str,
+        output_json: str,
+        *args,
+        **kwargs,
     ):
         self._template_id = template_id
         self._target_namespace = target_namespace
         self._group_name = group_name
+        self._output_json = output_json
         super().__init__(*args, **kwargs)
 
     def execute(self) -> dict:
@@ -110,11 +117,17 @@ class PublishDashboardFromTemplateOperation(BaseOperation):
                 f"Unexpected response from trying to update_dashboard_permissions : {json.dumps(response, indent=4)} "
             )
 
-        return {
+        result = {
             "status": "success",
             "dashboard_arn": dashboard_arn,
             "dashboard_id": dashboard_id,
         }
+
+        with open(self._output_json, "w") as output:
+            output.write(json.dumps(result))
+            self._log.info(f"Output written to {self._output_json}")
+
+        return result
 
     def _create_or_update_dashboard(self, dashboard_params: dict) -> tuple[str, str]:
         """

@@ -121,11 +121,17 @@ cli.add_command(import_template)
     help="The namespace you wish to target (e.g. tpp-prod, tpp-dev, tpp-staging).",
 )
 @click.option("--group-name", required=True, help="Name of the Quicksight User Group")
+@click.option(
+    "--output-json",
+    required=True,
+    help="The file path to which operation output should be written as json",
+)
 def publish_dashboard(
     aws_account_id: str,
     template_id: str,
     target_namespace: str,
     group_name: str,
+    output_json: str,
 ):
     """
     Create/Update a dashboard from a template
@@ -141,6 +147,7 @@ def publish_dashboard(
         template_id=template_id,
         target_namespace=target_namespace,
         group_name=group_name,
+        output_json=output_json,
     ).execute()
     log.info(result)
 

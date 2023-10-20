@@ -1,3 +1,7 @@
+import json
+import os.path
+import tempfile
+
 import botocore
 from botocore.config import Config
 from botocore.stub import Stubber
@@ -13,6 +17,8 @@ class TestPublishDashboardFromTemplateOperation:
         template_id = f"{target_namespace}-library"
         account = "012345678910"
         group_name = "my_group"
+
+        output_json = tempfile.NamedTemporaryFile()
 
         boto_config = Config(
             region_name="us-east-1",
@@ -188,9 +194,15 @@ class TestPublishDashboardFromTemplateOperation:
                 target_namespace=target_namespace,
                 aws_account_id=account,
                 group_name=group_name,
+                output_json=output_json.name,
             )
 
             result = op.execute()
 
             assert result["status"] == "success"
             assert result["dashboard_id"] == template_id
+            assert os.path.exists(output_json.name)
+
+            with open(output_json.name) as file:
+                result_from_file = json.loads(file.read())
+                assert result_from_file["dashboard_id"] == result["dashboard_id"]
