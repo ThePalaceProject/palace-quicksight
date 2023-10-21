@@ -15,6 +15,8 @@ class PublishDashboardFromTemplateOperation(BaseOperation):
         target_namespace: str,
         group_name: str,
         output_json: str,
+        result_bucket: str,
+        result_key: str,
         *args,
         **kwargs,
     ):
@@ -22,6 +24,8 @@ class PublishDashboardFromTemplateOperation(BaseOperation):
         self._target_namespace = target_namespace
         self._group_name = group_name
         self._output_json = output_json
+        self._result_bucket = result_bucket
+        self._result_key = result_key
         super().__init__(*args, **kwargs)
 
     def execute(self) -> dict:
@@ -123,9 +127,17 @@ class PublishDashboardFromTemplateOperation(BaseOperation):
             "dashboard_id": dashboard_id,
         }
 
-        with open(self._output_json, "w") as output:
-            output.write(json.dumps(result))
-            self._log.info(f"Output written to {self._output_json}")
+        json_string = json.dumps(result)
+        if self._output_json:
+            with open(self._output_json, "w") as output:
+                output.write(json_string)
+                self._log.info(f"Output written to {self._output_json}")
+
+        if self._result_bucket and self._result_key:
+            self._s3_client.put_object(
+                Bucket=self._result_bucket,
+                Key=self._result_key,
+                Body=json_string)
 
         return result
 

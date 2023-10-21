@@ -18,11 +18,13 @@ logging.basicConfig(
 
 log = logging.getLogger("core.cli")
 
+boto3.setup_default_session()
 
 def create_quicksight_client():
-    boto3.setup_default_session()
     return boto3.client("quicksight")
 
+def create_s3_client():
+    return boto3.client("s3")
 
 @click.group()
 def cli():
@@ -110,6 +112,7 @@ def import_template(
 cli.add_command(import_template)
 
 
+
 @click.command
 @click.option("--aws-account-id", required=True, help="The ID of the AWS account")
 @click.option(
@@ -123,8 +126,17 @@ cli.add_command(import_template)
 @click.option("--group-name", required=True, help="Name of the Quicksight User Group")
 @click.option(
     "--output-json",
-    required=True,
-    help="The file path to which operation output should be written as json",
+    required=False,
+    help="The file path to which operation output should be written as json",)
+@click.option(
+    "--result-bucket",
+    required=False,
+    help="An S3 bucket to save the results to. If specified, you must also specify a result-key"
+)
+@click.option(
+    "--result-key",
+    required=False,
+    help="An S3 object key to save the results to. If used, result-bucket must be specified."
 )
 def publish_dashboard(
     aws_account_id: str,
@@ -132,6 +144,8 @@ def publish_dashboard(
     target_namespace: str,
     group_name: str,
     output_json: str,
+    result_bucket:str,
+    result_key:str,
 ):
     """
     Create/Update a dashboard from a template
@@ -143,11 +157,14 @@ def publish_dashboard(
     log.info(f"group_name = {group_name}")
     result = PublishDashboardFromTemplateOperation(
         qs_client=create_quicksight_client(),
+        s3_client=create_s3_client(),
         aws_account_id=aws_account_id,
         template_id=template_id,
         target_namespace=target_namespace,
         group_name=group_name,
         output_json=output_json,
+        result_bucket=result_bucket,
+        result_key=result_key,
     ).execute()
     log.info(result)
 
