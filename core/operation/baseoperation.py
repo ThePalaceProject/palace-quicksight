@@ -22,10 +22,9 @@ class BaseOperation:
     A base class for AWS based operations.
     """
 
-    def __init__(self, qs_client, s3_client, aws_account_id: str):
+    def __init__(self, qs_client, aws_account_id: str):
         self._aws_account_id = aws_account_id
         self._qs_client = qs_client
-        self._s3_client = s3_client
         self._log = logging.getLogger(self.__class__.__name__)
 
     @abstractmethod
