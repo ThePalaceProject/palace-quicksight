@@ -1,3 +1,7 @@
+import json
+import os.path
+import tempfile
+
 import botocore
 from botocore.config import Config
 from botocore.stub import Stubber
@@ -13,6 +17,9 @@ class TestPublishDashboardFromTemplateOperation:
         template_id = f"{target_namespace}-library"
         account = "012345678910"
         group_name = "my_group"
+        result_bucket = "result-bucket"
+        result_key = "result-key"
+        output_json = tempfile.NamedTemporaryFile()
 
         boto_config = Config(
             region_name="us-east-1",
@@ -22,14 +29,21 @@ class TestPublishDashboardFromTemplateOperation:
             "quicksight", config=boto_config
         )
 
+        s3_client = botocore.session.get_session().create_client(
+            "s3", config=boto_config
+        )
+
+        dashboard_arn = (
+            "arn:aws:quicksight:us-west-2:128682227026:dashboard/tpp-prod-library"
+        )
         describe_template_definition_params = {
             "AwsAccountId": account,
             "TemplateId": template_id,
             "AliasName": "$LATEST",
         }
-        with Stubber(qs_client) as stub:
+        with Stubber(qs_client) as qs_stub, Stubber(s3_client) as s3_stub:
             template_arn = f"arn:aws:quicksight:::template/{target_namespace}-library"
-            stub.add_response(
+            qs_stub.add_response(
                 "describe_template",
                 service_response={
                     "Template": {
@@ -57,7 +71,7 @@ class TestPublishDashboardFromTemplateOperation:
 
             namespace_arn = "arn:quicksight:::namespace/default"
 
-            stub.add_response(
+            qs_stub.add_response(
                 "describe_namespace",
                 service_response={"Namespace": {"Arn": namespace_arn}},
                 expected_params={
@@ -71,7 +85,7 @@ class TestPublishDashboardFromTemplateOperation:
             )
             ds2_arn = f"arn:aws:quicksight:::dataset/{target_namespace}-patron_events"
 
-            stub.add_response(
+            qs_stub.add_response(
                 "describe_data_set",
                 service_response={"DataSet": {"Arn": ds1_arn}},
                 expected_params={
@@ -79,7 +93,7 @@ class TestPublishDashboardFromTemplateOperation:
                     "DataSetId": f"{target_namespace}-circulation_view",
                 },
             )
-            stub.add_response(
+            qs_stub.add_response(
                 "describe_data_set",
                 service_response={"DataSet": {"Arn": ds2_arn}},
                 expected_params={
@@ -88,7 +102,7 @@ class TestPublishDashboardFromTemplateOperation:
                 },
             )
 
-            stub.add_response(
+            qs_stub.add_response(
                 "create_dashboard",
                 service_response={
                     "ResponseMetadata": {
@@ -103,7 +117,7 @@ class TestPublishDashboardFromTemplateOperation:
                         },
                         "RetryAttempts": 0,
                     },
-                    "Arn": "arn:aws:quicksight:us-west-2:128682227026:dashboard/tpp-prod-library",
+                    "Arn": dashboard_arn,
                     "VersionArn": f"arn:aws:quicksight:::dashboard/{target_namespace}-library/version/6",
                     "DashboardId": f"{target_namespace}-library",
                     "CreationStatus": "CREATION_IN_PROGRESS",
@@ -132,7 +146,7 @@ class TestPublishDashboardFromTemplateOperation:
                 },
             )
             group_arn = f"arn:aws:quicksight:::group/{group_name}"
-            stub.add_response(
+            qs_stub.add_response(
                 "describe_group",
                 service_response={"Group": {"Arn": group_arn}},
                 expected_params={
@@ -142,7 +156,7 @@ class TestPublishDashboardFromTemplateOperation:
                 },
             )
 
-            stub.add_response(
+            qs_stub.add_response(
                 "update_dashboard_permissions",
                 service_response={
                     "ResponseMetadata": {
@@ -182,15 +196,37 @@ class TestPublishDashboardFromTemplateOperation:
                     ],
                 },
             )
+
+            s3_stub.add_response(
+                "put_object",
+                service_response={},
+                expected_params={
+                    "Bucket": result_bucket,
+                    "Key": result_key,
+                    "Body": json.dumps({template_id: [dashboard_arn]}),
+                },
+            )
+
             op = PublishDashboardFromTemplateOperation(
                 qs_client=qs_client,
+                s3_client=s3_client,
                 template_id=template_id,
                 target_namespace=target_namespace,
                 aws_account_id=account,
                 group_name=group_name,
+                output_json=output_json.name,
+                result_bucket=result_bucket,
+                result_key=result_key,
             )
 
             result = op.execute()
 
             assert result["status"] == "success"
-            assert result["dashboard_id"] == template_id
+            assert result["dashboard_info"] == {template_id: [dashboard_arn]}
+            assert os.path.exists(output_json.name)
+
+            with open(output_json.name) as file:
+                result_from_file = json.loads(file.read())
+                assert result_from_file["dashboard_info"] == {
+                    template_id: [dashboard_arn]
+                }
