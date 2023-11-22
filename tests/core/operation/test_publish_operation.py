@@ -103,6 +103,15 @@ class TestPublishDashboardFromTemplateOperation:
             )
 
             qs_stub.add_response(
+                "delete_dashboard",
+                service_response={},
+                expected_params={
+                    "AwsAccountId": account,
+                    "DashboardId": template_id,
+                },
+            )
+
+            qs_stub.add_response(
                 "create_dashboard",
                 service_response={
                     "ResponseMetadata": {

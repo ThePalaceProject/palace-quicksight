@@ -31,7 +31,7 @@ class BaseOperation:
     def execute(self) -> dict:
         pass
 
-    def _create_or_update_template(self, template_data: dict) -> TemplateResponse:
+    def _recreate_template(self, template_data: dict) -> TemplateResponse:
         """
         Creates new or updates existing template.
         :param template_data:
@@ -76,11 +76,11 @@ class BaseOperation:
                 response["Arn"], response["VersionArn"], response["TemplateId"]
             )
 
-    def _create_or_update_template_from_template_definition(
+    def _recreate_template_from_template_definition(
         self, template_definition: dict
     ) -> TemplateResponse:
         template_definition["AwsAccountId"] = self._aws_account_id
-        return self._create_or_update_template(template_data=template_definition)
+        return self._recreate_template(template_data=template_definition)
 
     def _resolve_data_set_id_from_placeholder(
         self, namespace: str, placeholder: str

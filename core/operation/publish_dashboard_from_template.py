@@ -78,7 +78,7 @@ class PublishDashboardFromTemplateOperation(BaseOperation):
             )
 
         # publish dashboard
-        dashboard_arn, dashboard_id = self._create_or_update_dashboard(
+        dashboard_arn, dashboard_id = self._recreate_dashboard(
             dashboard_params=parameters
         )
 
@@ -142,12 +142,20 @@ class PublishDashboardFromTemplateOperation(BaseOperation):
 
         return result
 
-    def _create_or_update_dashboard(self, dashboard_params: dict) -> tuple[str, str]:
+    def _recreate_dashboard(self, dashboard_params: dict) -> tuple[str, str]:
         """
-        Creates new or updates existing template.
+        Creates new or recreates existing template.
         :param dashboard_params:
         :return: Dashboard ARN, Dashboard ID
         """
+        try:
+            response = self._qs_client.delete_dashboard(
+                AwsAccountId=dashboard_params["AwsAccountId"],
+                DashboardId=dashboard_params["DashboardId"],
+            )
+        except self._qs_client.exceptions.ResourceNotFoundException as e:
+            pass
+
         try:
             response = self._qs_client.create_dashboard(**dashboard_params)
         except self._qs_client.exceptions.ResourceExistsException as e:
