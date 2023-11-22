@@ -13,19 +13,19 @@ files = [
 
 [[package]]
 name = "boto3"
-version = "1.28.41"
+version = "1.28.85"
 description = "The AWS SDK for Python"
 optional = false
 python-versions = ">= 3.7"
 files = [
-    {file = "boto3-1.28.41-py3-none-any.whl", hash = "sha256:47215c08645d1ea2568f9f358f25ffd4a42e08bce9af2fa1dd70c93c682dc880"},
-    {file = "boto3-1.28.41.tar.gz", hash = "sha256:2f655ab7e577c7543f9ee4e42d98641ccf02230d2f33695a6b39617b765401f5"},
+    {file = "boto3-1.28.85-py3-none-any.whl", hash = "sha256:1fb7e7ba32a6701990168eb7a08e1fb624ae48130784dfab25904ed47deabb31"},
+    {file = "boto3-1.28.85.tar.gz", hash = "sha256:96b4cb2708933cef7dbe1177df37ef0593839942978784147aade0e49511eb2b"},
 ]
 
 [package.dependencies]
-botocore = ">=1.31.41,<1.32.0"
+botocore = ">=1.31.85,<1.32.0"
 jmespath = ">=0.7.1,<2.0.0"
-s3transfer = ">=0.6.0,<0.7.0"
+s3transfer = ">=0.7.0,<0.8.0"
 
 [package.extras]
 crt = ["botocore[crt] (>=1.21.0,<2.0a0)"]
@@ -1196,13 +1196,13 @@ test = ["fixtures", "mock", "purl", "pytest", "requests-futures", "sphinx", "tes
 
 [[package]]
 name = "s3transfer"
-version = "0.6.2"
+version = "0.7.0"
 description = "An Amazon S3 Transfer Manager"
 optional = false
 python-versions = ">= 3.7"
 files = [
-    {file = "s3transfer-0.6.2-py3-none-any.whl", hash = "sha256:b014be3a8a2aab98cfe1abc7229cc5a9a0cf05eb9c1f2b86b230fd8df3f78084"},
-    {file = "s3transfer-0.6.2.tar.gz", hash = "sha256:cab66d3380cca3e70939ef2255d01cd8aece6a4907a9528740f668c4b0611861"},
+    {file = "s3transfer-0.7.0-py3-none-any.whl", hash = "sha256:10d6923c6359175f264811ef4bf6161a3156ce8e350e705396a7557d6293c33a"},
+    {file = "s3transfer-0.7.0.tar.gz", hash = "sha256:fd3889a66f5fe17299fe75b82eae6cf722554edca744ca5d5fe308b104883d2e"},
 ]
 
 [package.dependencies]
