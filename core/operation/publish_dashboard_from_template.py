@@ -149,7 +149,7 @@ class PublishDashboardFromTemplateOperation(BaseOperation):
         :return: Dashboard ARN, Dashboard ID
         """
         try:
-            response = self._qs_client.delete_dashboard(
+            _ = self._qs_client.delete_dashboard(
                 AwsAccountId=dashboard_params["AwsAccountId"],
                 DashboardId=dashboard_params["DashboardId"],
             )
