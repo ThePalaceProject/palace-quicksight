@@ -14,13 +14,15 @@ class PublishDashboardFromTemplateOperation(BaseOperation):
         template_id: str,
         target_namespace: str,
         group_name: str,
-        output_json: str,
         result_bucket: str,
         result_key: str,
         s3_client,
+        dashboard_alias: str = None,
+        output_json: str = None,
         *args,
         **kwargs,
     ):
+        self._dashboard_alias = dashboard_alias
         self._template_id = template_id
         self._target_namespace = target_namespace
         self._group_name = group_name
@@ -125,7 +127,11 @@ class PublishDashboardFromTemplateOperation(BaseOperation):
 
         result = {
             "status": "success",
-            "dashboard_info": {self._template_id: [dashboard_arn]},
+            "dashboard_info": {
+                self._dashboard_alias
+                if self._dashboard_alias
+                else self._template_id: [dashboard_arn]
+            },
         }
 
         if self._output_json:

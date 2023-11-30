@@ -197,11 +197,6 @@ cli.add_command(publish_dashboard)
 )
 @click.option("--group-name", required=True, help="Name of the Quicksight User Group")
 @click.option(
-    "--output-json",
-    required=False,
-    help="The file path to which operation output should be written as json",
-)
-@click.option(
     "--result-bucket",
     required=False,
     help="An S3 bucket to save the results to. If specified, you must also specify a result-key",
@@ -211,16 +206,21 @@ cli.add_command(publish_dashboard)
     required=False,
     help="An S3 object key to save the results to. If used, result-bucket must be specified.",
 )
+@click.option(
+    "--output-json",
+    required=False,
+    help="(Optional) The file path to which operation output should be written as json",
+)
 def import_and_publish(
     aws_account_id: str,
     template_name: str,
     data_source_arn: str,
     target_namespace: str,
     input_dir: str,
-    output_json: str,
     group_name: str,
     result_bucket: str,
     result_key: str,
+    output_json: str = None,
 ):
 
     log.info(f"import_and_publish")
@@ -252,6 +252,7 @@ def import_and_publish(
         qs_client=create_quicksight_client(),
         s3_client=create_s3_client(),
         aws_account_id=aws_account_id,
+        dashboard_alias=template_name,
         template_id=template_id,
         target_namespace=target_namespace,
         group_name=group_name,
