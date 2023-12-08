@@ -1,5 +1,6 @@
 import json
 import time
+from typing import Optional
 
 from core.operation.baseoperation import BaseOperation
 
@@ -17,8 +18,8 @@ class PublishDashboardFromTemplateOperation(BaseOperation):
         result_bucket: str,
         result_key: str,
         s3_client,
-        dashboard_alias: str = None,
-        output_json: str = None,
+        dashboard_alias: Optional[str] = None,
+        output_json: Optional[str] = None,
         *args,
         **kwargs,
     ):

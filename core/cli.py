@@ -1,4 +1,5 @@
 import logging
+from typing import Optional
 
 import boto3
 import click
@@ -220,7 +221,7 @@ def import_and_publish(
     group_name: str,
     result_bucket: str,
     result_key: str,
-    output_json: str = None,
+    output_json: Optional[str] = None,
 ):
 
     log.info(f"import_and_publish")
