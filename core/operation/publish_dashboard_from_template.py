@@ -1,5 +1,6 @@
 import json
 import time
+from typing import Optional
 
 from core.operation.baseoperation import BaseOperation
 
@@ -14,13 +15,15 @@ class PublishDashboardFromTemplateOperation(BaseOperation):
         template_id: str,
         target_namespace: str,
         group_name: str,
-        output_json: str,
         result_bucket: str,
         result_key: str,
         s3_client,
+        dashboard_alias: Optional[str] = None,
+        output_json: Optional[str] = None,
         *args,
         **kwargs,
     ):
+        self._dashboard_alias = dashboard_alias
         self._template_id = template_id
         self._target_namespace = target_namespace
         self._group_name = group_name
@@ -78,7 +81,7 @@ class PublishDashboardFromTemplateOperation(BaseOperation):
             )
 
         # publish dashboard
-        dashboard_arn, dashboard_id = self._create_or_update_dashboard(
+        dashboard_arn, dashboard_id = self._recreate_dashboard(
             dashboard_params=parameters
         )
 
@@ -125,7 +128,11 @@ class PublishDashboardFromTemplateOperation(BaseOperation):
 
         result = {
             "status": "success",
-            "dashboard_info": {self._template_id: [dashboard_arn]},
+            "dashboard_info": {
+                self._dashboard_alias
+                if self._dashboard_alias
+                else self._template_id: [dashboard_arn]
+            },
         }
 
         if self._output_json:
@@ -142,12 +149,20 @@ class PublishDashboardFromTemplateOperation(BaseOperation):
 
         return result
 
-    def _create_or_update_dashboard(self, dashboard_params: dict) -> tuple[str, str]:
+    def _recreate_dashboard(self, dashboard_params: dict) -> tuple[str, str]:
         """
-        Creates new or updates existing template.
+        Creates new or recreates existing template.
         :param dashboard_params:
         :return: Dashboard ARN, Dashboard ID
         """
+        try:
+            _ = self._qs_client.delete_dashboard(
+                AwsAccountId=dashboard_params["AwsAccountId"],
+                DashboardId=dashboard_params["DashboardId"],
+            )
+        except self._qs_client.exceptions.ResourceNotFoundException as e:
+            pass
+
         try:
             response = self._qs_client.create_dashboard(**dashboard_params)
         except self._qs_client.exceptions.ResourceExistsException as e:

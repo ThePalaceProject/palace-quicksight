@@ -44,7 +44,7 @@ class ImportFromJsonOperation(BaseOperation):
         # create or update template
         template_data["Name"] = self._target_namespace + "-" + self._template_name
         template_data["TemplateId"] = template_data["Name"]
-        template_response = self._create_or_update_template_from_template_definition(
+        template_response = self._recreate_template_from_template_definition(
             template_definition=template_data
         )
 
@@ -73,7 +73,7 @@ class ImportFromJsonOperation(BaseOperation):
                 placeholder=placeholder, namespace=self._target_namespace
             )
             dataset["Name"] = dataset["Name"]
-            ds_response = self._create_or_update_data_set(dataset_definition=dataset)
+            ds_response = self._recreate_data_set(dataset_definition=dataset)
 
             data_sets_created.append(
                 {
@@ -92,7 +92,7 @@ class ImportFromJsonOperation(BaseOperation):
             },
         }
 
-    def _create_or_update_data_set(self, dataset_definition: dict):
+    def _recreate_data_set(self, dataset_definition: dict):
         """
         Create new or updates existing DataSet
         :param dataset_definition:

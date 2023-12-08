@@ -114,7 +114,7 @@ class ExportAnalysisOperation(BaseOperation):
                 },
             },
         }
-        return self._create_or_update_template(template_data=params)
+        return self._recreate_template(template_data=params)
 
     def _save_dataset_to_file(self, di) -> str:
         """
