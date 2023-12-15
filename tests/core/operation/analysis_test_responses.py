@@ -402,3 +402,37 @@ def describe_data_set_2_response():
         },
         "RequestId": "3e6ad967-c44d-4a86-8391-be51ebf978c5",
     }
+
+
+def describe_refresh_props_response():
+    return {
+        "DataSetRefreshProperties": {
+            "RefreshConfiguration": {
+                "IncrementalRefresh": {
+                    "LookbackWindow": {
+                        "ColumnName": "time_stamp",
+                        "Size": 1,
+                        "SizeUnit": "DAY",
+                    }
+                }
+            }
+        }
+    }
+
+
+def list_refresh_schedules_response():
+    return {
+        "RefreshSchedules": [
+            {
+                "ScheduleId": "fcdd5fe8-537d-4e59-947e-af35b5a82385",
+                "ScheduleFrequency": {
+                    "Interval": "DAILY",
+                    "Timezone": "America/New_York",
+                    "TimeOfTheDay": "23:59",
+                },
+                "StartAfterDateTime": "2023-09-29 16:59:00-07:00",
+                "RefreshType": "INCREMENTAL_REFRESH",
+                "Arn": "arn:aws:quicksight:us-west-2:128682227026:dataset/e9e15c78-0193-4e4c-9a49-ed005569297d/refresh-schedule/fcdd5fe8-537d-4e59-947e-af35b5a82385",
+            }
+        ]
+    }

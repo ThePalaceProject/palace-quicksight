@@ -1,8 +1,17 @@
+import datetime
 import json
+import os.path
 import time
 from dataclasses import dataclass
 
-from core.operation.baseoperation import DATA_SET_DIR, TEMPLATE_DIR, BaseOperation
+from botocore.exceptions import ClientError
+
+from core.operation.baseoperation import (
+    DATA_SET_DIR,
+    DATA_SET_REFRESH_PROPS_SUFFIX,
+    TEMPLATE_DIR,
+    BaseOperation,
+)
 from core.util import recursively_replace_value
 
 
@@ -72,8 +81,18 @@ class ImportFromJsonOperation(BaseOperation):
             dataset["DataSetId"] = self._resolve_data_set_id_from_placeholder(
                 placeholder=placeholder, namespace=self._target_namespace
             )
-            dataset["Name"] = dataset["Name"]
+
+            data_set_id = dataset["DataSetId"]
+            # remove any associated refresh schedules
+            self._delete_refresh_schedules(data_set_id=data_set_id)
+            logical_data_set_name = dataset["Name"]
+
+            # recreate dataset
             ds_response = self._recreate_data_set(dataset_definition=dataset)
+            # recreate the schedule
+            self._create_refresh_schedule(
+                logical_data_set_name=logical_data_set_name, data_set_id=data_set_id
+            )
 
             data_sets_created.append(
                 {
@@ -135,3 +154,76 @@ class ImportFromJsonOperation(BaseOperation):
             )
 
             return DataSetResponse(response["Arn"], response["DataSetId"])
+
+    def _delete_refresh_schedules(self, data_set_id: str):
+        params = {
+            "AwsAccountId": self._aws_account_id,
+            "DataSetId": data_set_id,
+        }
+
+        # delete the refresh properties
+        try:
+            self._qs_client.delete_data_set_refresh_properties(**params)
+        except ClientError as e:
+            pass
+
+        # delete any pre-existing schedules
+        refresh_schedules = []
+
+        try:
+            response = self._qs_client.list_refresh_schedules(**params)
+            refresh_schedules = [x["ScheduleId"] for x in response["RefreshSchedules"]]
+
+        except self._qs_client.exceptions.ResourceNotFoundException:
+            pass
+
+        for schedule_id in refresh_schedules:
+            delete_params = {}
+            delete_params.update(params)
+            delete_params.update({"ScheduleId": schedule_id})
+            self._qs_client.delete_refresh_schedule(**delete_params)
+
+    def _get_tomorrow(self) -> datetime.datetime:
+        return datetime.datetime.now() + datetime.timedelta(days=1)
+
+    def _create_refresh_schedule(self, logical_data_set_name: str, data_set_id: str):
+        params = {
+            "AwsAccountId": self._aws_account_id,
+            "DataSetId": data_set_id,
+        }
+
+        dataset_refresh_props_filename = self._resolve_path(
+            self._input_dir,
+            DATA_SET_DIR,
+            logical_data_set_name + DATA_SET_REFRESH_PROPS_SUFFIX + ".json",
+        )
+
+        if os.path.exists(dataset_refresh_props_filename):
+            with open(dataset_refresh_props_filename) as dataset_refresh_props:
+                props = {
+                    "DataSetRefreshProperties": json.loads(dataset_refresh_props.read())
+                }
+                props.update(params)
+                self._qs_client.put_data_set_refresh_properties(**props)
+
+        dataset_refresh_filename = self._resolve_path(
+            self._input_dir,
+            DATA_SET_DIR,
+            self._resolve_schedules_filename(logical_data_set_name),
+        )
+
+        if os.path.exists(dataset_refresh_filename):
+            with open(dataset_refresh_filename) as dataset_refresh_file:
+                schedules = json.loads(dataset_refresh_file.read())["RefreshSchedules"]
+
+                for index, schedule in enumerate(schedules):
+                    start_after_datetime = self._get_tomorrow()
+                    # start after date must be in the future
+                    schedule["ScheduleId"] = data_set_id + "-" + str(index)
+                    schedule["StartAfterDateTime"] = start_after_datetime
+                    schedule_params = {"Schedule": schedule}
+                    schedule_params.update(params)
+                    response = self._qs_client.create_refresh_schedule(
+                        **schedule_params
+                    )
+                    self._log.info(f"create_refresh_schedule_response={response}")
