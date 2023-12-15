@@ -2,8 +2,11 @@ import json
 import os
 from typing import List
 
+from botocore.exceptions import ClientError
+
 from core.operation.baseoperation import (
     DATA_SET_DIR,
+    DATA_SET_REFRESH_PROPS_SUFFIX,
     TEMPLATE_DIR,
     BaseOperation,
     TemplateResponse,
@@ -93,9 +96,24 @@ class ExportAnalysisOperation(BaseOperation):
 
         # for each dataset declaration identifiers
         for di in data_set_identifier_declarations:
-            # save to json file
-            ds_file = self._save_dataset_to_file(di=di)
+            identifier = di["Identifier"]
+            arn = di["DataSetArn"]
+            data_set_id = arn.split("dataset/", 1)[1]
+            # save data set definition to json file
+            ds_file = self._save_dataset_to_file(data_set_id, identifier)
             files_to_update.append(ds_file)
+            ds_refresh_props_file = self._save_dataset_refresh_props_to_file(
+                data_set_id, identifier
+            )
+            if ds_refresh_props_file:
+                files_to_update.append(ds_refresh_props_file)
+                ds_refresh_schedules_file = (
+                    self._save_dataset_refresh_schedules_to_file(
+                        data_set_id, identifier
+                    )
+                )
+                if ds_refresh_schedules_file:
+                    files_to_update.append(ds_refresh_props_file)
 
         return {"status": "success", "files_exported": files_to_update}
 
@@ -116,31 +134,86 @@ class ExportAnalysisOperation(BaseOperation):
         }
         return self._recreate_template(template_data=params)
 
-    def _save_dataset_to_file(self, di) -> str:
+    def _save_dataset_to_file(
+        self, data_set_id: str, logical_data_set_name: str
+    ) -> str:
         """
-
-        :param di: dataset map
         :return: The path of the dataset file
         """
-        identifier = di["Identifier"]
-        arn = di["DataSetArn"]
-        dataset_id = arn.split("dataset/", 1)[1]
-        ds_def_elements_to_save = self._describe_data_set(dataset_id)
+
+        ds_def_elements_to_save = self._describe_data_set(data_set_id)
         # remove the following fields from the response before saving it.
         for i in ["Arn", "DataSetId", "CreatedTime", "LastUpdatedTime"]:
             ds_def_elements_to_save.pop(i)
 
         # align the data set name with the identifier
-        ds_def_elements_to_save["Name"] = identifier
+        ds_def_elements_to_save["Name"] = logical_data_set_name
         # remove the datasource arn since this will need to be overridden
         recursively_replace_value(ds_def_elements_to_save, "DataSourceArn", "")
         # save what is left to disk
         ds_def_str = json.dumps(ds_def_elements_to_save, indent=4)
         dataset_file_path = self._resolve_path(
-            self._output_dir, DATA_SET_DIR, identifier + ".json"
+            self._output_dir, DATA_SET_DIR, logical_data_set_name + ".json"
         )
 
         with open(dataset_file_path, "w") as dataset_file:
             dataset_file.write(ds_def_str)
 
         return dataset_file_path
+
+    def _save_dataset_refresh_props_to_file(
+        self, data_set_id: str, logical_data_set_name: str
+    ) -> str | None:
+        # get data set refresh props
+        try:
+            response = self._qs_client.describe_data_set_refresh_properties(
+                AwsAccountId=self._aws_account_id, DataSetId=data_set_id
+            )
+            data_set_refresh_props = response["DataSetRefreshProperties"]
+            data_set_refresh_props_str = json.dumps(data_set_refresh_props, indent=4)
+            file_path = self._resolve_path(
+                self._output_dir,
+                DATA_SET_DIR,
+                logical_data_set_name + DATA_SET_REFRESH_PROPS_SUFFIX + ".json",
+            )
+
+            with open(file_path, "w") as props_file:
+                props_file.write(data_set_refresh_props_str)
+
+            return file_path
+        except ClientError as e:
+            # If the refresh properties don't exist an InvalidParameterException is thrown
+            # rather than ResourceNotFoundException as I would have expected. Having a generic catch all here is
+            # probably sufficient.
+            return None
+
+    def _save_dataset_refresh_schedules_to_file(
+        self, data_set_id: str, logical_data_set_name: str
+    ) -> str | None:
+        try:
+            response = self._qs_client.list_refresh_schedules(
+                AwsAccountId=self._aws_account_id, DataSetId=data_set_id
+            )
+            refresh_schedules = response["RefreshSchedules"]
+            # remove account specific info
+            for schedule in refresh_schedules:
+                for prop in ["ScheduleId", "StartAfterDateTime", "Arn"]:
+                    del schedule[prop]
+
+            data_set_refresh_schedules = {"RefreshSchedules": refresh_schedules}
+
+            file_path = self._resolve_path(
+                self._output_dir,
+                DATA_SET_DIR,
+                self._resolve_schedules_filename(logical_data_set_name),
+            )
+
+            with open(file_path, "w") as schedules_file:
+                data_set_refresh_schedules_str = json.dumps(
+                    data_set_refresh_schedules, indent=4, default=str
+                )
+                schedules_file.write(data_set_refresh_schedules_str)
+            return file_path
+
+        except self._qs_client.exceptions.ResourceNotFoundException as e:
+            return None

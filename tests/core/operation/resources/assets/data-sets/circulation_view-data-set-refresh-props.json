@@ -1,0 +1,11 @@
+{
+    "RefreshConfiguration": {
+        "IncrementalRefresh": {
+            "LookbackWindow": {
+                "ColumnName": "time_stamp",
+                "Size": 1,
+                "SizeUnit": "DAY"
+            }
+        }
+    }
+}

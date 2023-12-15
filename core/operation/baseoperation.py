@@ -8,6 +8,8 @@ from dataclasses import dataclass
 ASSET_DIR = "assets"
 TEMPLATE_DIR = os.path.join(ASSET_DIR, "templates")
 DATA_SET_DIR = os.path.join(ASSET_DIR, "data-sets")
+DATA_SET_REFRESH_PROPS_SUFFIX = "-data-set-refresh-props"
+DATA_SET_REFRESH_SCHEDULES_SUFFIX = "-data-set-refresh-schedules"
 
 
 @dataclass
@@ -102,3 +104,6 @@ class BaseOperation:
 
     def _resolve_path(self, *paths):
         return os.path.join(*paths)
+
+    def _resolve_schedules_filename(self, logical_data_set_name: str):
+        return logical_data_set_name + DATA_SET_REFRESH_SCHEDULES_SUFFIX + ".json"
