@@ -1,8 +1,8 @@
 import os
 import tempfile
 
-import botocore
 from botocore.config import Config
+from botocore.session import Session
 from botocore.stub import Stubber
 
 from core.operation.export_analysis_operation import ExportAnalysisOperation
@@ -10,9 +10,11 @@ from tests.core.operation.analysis_test_responses import (
     create_template_response,
     describe_data_set_1_response,
     describe_data_set_2_response,
+    describe_refresh_props_response,
     describe_template_definition_response,
     get_analysis_definition_response,
     get_analysis_description_response,
+    list_refresh_schedules_response,
 )
 
 
@@ -26,9 +28,8 @@ class TestExportAnalysisOperation:
             region_name="us-east-1",
         )
 
-        qs_client = botocore.session.get_session().create_client(
-            "quicksight", config=boto_config
-        )
+        sess = Session()
+        qs_client = sess.create_client("quicksight", config=boto_config)
 
         with Stubber(qs_client) as stub:
             analysis_description_params = {
@@ -104,8 +105,36 @@ class TestExportAnalysisOperation:
             )
 
             stub.add_response(
+                "describe_data_set_refresh_properties",
+                service_response=describe_refresh_props_response(),
+                expected_params={
+                    "AwsAccountId": account,
+                    "DataSetId": "e9e15c78-0193-4e4c-9a49-ed005569297d",
+                },
+            )
+
+            stub.add_response(
+                "list_refresh_schedules",
+                service_response=list_refresh_schedules_response(),
+                expected_params={
+                    "AwsAccountId": account,
+                    "DataSetId": "e9e15c78-0193-4e4c-9a49-ed005569297d",
+                },
+            )
+
+            stub.add_response(
                 "describe_data_set",
                 service_response=describe_data_set_2_response(),
+                expected_params={
+                    "AwsAccountId": account,
+                    "DataSetId": "86eb4ca5-9552-4ba6-8b1b-7ef1b9b40f78",
+                },
+            )
+
+            # if the refresh properties don't exist, an InvalidParameterException is thrown FWIW.
+            stub.add_client_error(
+                "describe_data_set_refresh_properties",
+                service_error_code="InvalidParameterException",
                 expected_params={
                     "AwsAccountId": account,
                     "DataSetId": "86eb4ca5-9552-4ba6-8b1b-7ef1b9b40f78",
@@ -129,6 +158,9 @@ class TestExportAnalysisOperation:
         template_file = os.path.join(templates_dir, "library.json")
         patron_events_file = os.path.join(data_sets_dir, "patron_events.json")
         circulation_events_file = os.path.join(data_sets_dir, "circulation_view.json")
+        circulation_events_refresh_schedule_file = os.path.join(
+            data_sets_dir, "circulation_view-data-set-refresh-schedules.json"
+        )
         for p in [
             assets_dir,
             data_sets_dir,
@@ -136,5 +168,6 @@ class TestExportAnalysisOperation:
             template_file,
             patron_events_file,
             circulation_events_file,
+            circulation_events_refresh_schedule_file,
         ]:
             assert os.path.exists(p)

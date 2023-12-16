@@ -1,5 +1,8 @@
-import botocore
+import datetime
+from unittest.mock import patch
+
 from botocore.config import Config
+from botocore.session import Session
 from botocore.stub import Stubber
 
 from core.operation.import_from_json_operation import ImportFromJsonOperation
@@ -27,9 +30,7 @@ def create_data_set_response(target_namespace, data_set_name):
     return response
 
 
-def create_data_set_params1(
-    input_dir, target_namespace, data_source_arn, aws_account_id
-):
+def create_data_set_params1(target_namespace, data_source_arn, aws_account_id):
     data_set_params = {
         "Name": "circulation_view",
         "PhysicalTableMap": {
@@ -63,9 +64,7 @@ def create_data_set_params1(
     return data_set_params
 
 
-def create_data_set_params2(
-    input_dir, target_namespace, data_source_arn, aws_account_id
-):
+def create_data_set_params2(target_namespace, data_source_arn, aws_account_id):
     data_set_params = {
         "Name": "patron_events",
         "PhysicalTableMap": {
@@ -97,6 +96,40 @@ def create_data_set_params2(
         "DataSetId": f"{target_namespace}-patron_events",
     }
     return data_set_params
+
+
+def create_data_set_refresh_properties_params(data_set_id, aws_account_id):
+    return {
+        "AwsAccountId": aws_account_id,
+        "DataSetId": data_set_id,
+        "DataSetRefreshProperties": {
+            "RefreshConfiguration": {
+                "IncrementalRefresh": {
+                    "LookbackWindow": {
+                        "ColumnName": "time_stamp",
+                        "Size": 1,
+                        "SizeUnit": "DAY",
+                    }
+                }
+            }
+        },
+    }
+
+
+def create_refresh_schedule_params(data_set_id, aws_account_id):
+    return {
+        "AwsAccountId": aws_account_id,
+        "DataSetId": data_set_id,
+        "Schedule": {
+            "ScheduleFrequency": {
+                "Interval": "DAILY",
+                "Timezone": "America/New_York",
+                "TimeOfTheDay": "23:59",
+            },
+            "StartAfterDateTime": "2023-09-29 16:59:00-07:00",
+            "RefreshType": "INCREMENTAL_REFRESH",
+        },
+    }
 
 
 def create_template_params(target_namespace, aws_account_id):
@@ -180,11 +213,15 @@ class TestImportTemplateOperation:
 
         new_template_name = target_namespace + "-" + template_name
 
-        qs_client = botocore.session.get_session().create_client(
-            "quicksight", config=boto_config
-        )
-        with Stubber(qs_client) as stub:
+        sess = Session()
+        qs_client = sess.create_client("quicksight", config=boto_config)
 
+        this_time_tomorrow = datetime.datetime.now()
+        with Stubber(qs_client) as stub, patch(
+            "core.operation.import_from_json_operation.ImportFromJsonOperation._get_tomorrow"
+        ) as dt:
+
+            dt.return_value = this_time_tomorrow
             stub.add_response(
                 "delete_template",
                 service_response={},
@@ -204,6 +241,47 @@ class TestImportTemplateOperation:
                 target_namespace=target_namespace, data_set_name="circulation_view"
             )
 
+            stub.add_client_error(
+                "delete_data_set_refresh_properties",
+                service_error_code="InvalidParameterException",
+                expected_params={
+                    "DataSetId": ds1_name,
+                    "AwsAccountId": account,
+                },
+            )
+
+            schedule_id = "my_schedule_id"
+            stub.add_response(
+                "list_refresh_schedules",
+                service_response={
+                    "RefreshSchedules": [
+                        {
+                            "ScheduleId": schedule_id,
+                            "RefreshType": "INCREMENTAL_REFRESH",
+                            "ScheduleFrequency": {
+                                "Interval": "DAILY",
+                                "Timezone": "America/New_York",
+                                "TimeOfTheDay": "23:59",
+                            },
+                        }
+                    ]
+                },
+                expected_params={
+                    "DataSetId": ds1_name,
+                    "AwsAccountId": account,
+                },
+            )
+
+            stub.add_response(
+                "delete_refresh_schedule",
+                service_response={},
+                expected_params={
+                    "DataSetId": ds1_name,
+                    "AwsAccountId": account,
+                    "ScheduleId": schedule_id,
+                },
+            )
+
             stub.add_response(
                 "delete_data_set",
                 service_response={},
@@ -217,12 +295,59 @@ class TestImportTemplateOperation:
                 "create_data_set",
                 service_response=create_data_set_response(target_namespace, ds1_name),
                 expected_params=create_data_set_params1(
-                    input_dir, target_namespace, data_source_arn, account
+                    target_namespace=target_namespace,
+                    data_source_arn=data_source_arn,
+                    aws_account_id=account,
                 ),
+            )
+
+            stub.add_response(
+                "put_data_set_refresh_properties",
+                service_response={},
+                expected_params=create_data_set_refresh_properties_params(
+                    ds1_name, account
+                ),
+            )
+
+            stub.add_response(
+                "create_refresh_schedule",
+                service_response={},
+                expected_params={
+                    "DataSetId": ds1_name,
+                    "AwsAccountId": account,
+                    "Schedule": {
+                        "ScheduleId": ds1_name + "-0",
+                        "ScheduleFrequency": {
+                            "Interval": "DAILY",
+                            "Timezone": "UTC",
+                            "TimeOfTheDay": "07:00",
+                        },
+                        "StartAfterDateTime": this_time_tomorrow,
+                        "RefreshType": "INCREMENTAL_REFRESH",
+                    },
+                },
             )
 
             ds2_name = create_new_dataset_name(
                 target_namespace=target_namespace, data_set_name="patron_events"
+            )
+
+            stub.add_client_error(
+                "delete_data_set_refresh_properties",
+                service_error_code="InvalidParameterException",
+                expected_params={
+                    "DataSetId": ds2_name,
+                    "AwsAccountId": account,
+                },
+            )
+
+            stub.add_response(
+                "list_refresh_schedules",
+                service_response={"RefreshSchedules": []},
+                expected_params={
+                    "DataSetId": ds2_name,
+                    "AwsAccountId": account,
+                },
             )
 
             stub.add_response(
@@ -238,7 +363,9 @@ class TestImportTemplateOperation:
                 "create_data_set",
                 service_response=create_data_set_response(target_namespace, ds2_name),
                 expected_params=create_data_set_params2(
-                    input_dir, target_namespace, data_source_arn, account
+                    target_namespace=target_namespace,
+                    data_source_arn=data_source_arn,
+                    aws_account_id=account,
                 ),
             )
 
