@@ -144,6 +144,7 @@ class PublishDashboardFromTemplateOperation(BaseOperation):
             self._s3_client.put_object(
                 Bucket=self._result_bucket,
                 Key=self._result_key,
+                ContentType="application/json",
                 Body=json.dumps(result["dashboard_info"]),
             )
 

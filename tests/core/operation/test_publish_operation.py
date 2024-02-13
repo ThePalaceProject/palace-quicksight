@@ -212,6 +212,7 @@ class TestPublishDashboardFromTemplateOperation:
                 expected_params={
                     "Bucket": result_bucket,
                     "Key": result_key,
+                    "ContentType": "application/json",
                     "Body": json.dumps({template_id: [dashboard_arn]}),
                 },
             )
