@@ -85,7 +85,7 @@ class ExportAnalysisOperation(BaseOperation):
             map_to_save[i] = self._template_definition[i]
 
         # save the template as json file
-        definition_json_str = json.dumps(map_to_save, indent=4)
+        definition_json_str = json.dumps(map_to_save, indent=4, default=str)
         template_file_path = self._resolve_path(
             self._output_dir, TEMPLATE_DIR, self._template_definition["Name"] + ".json"
         )
