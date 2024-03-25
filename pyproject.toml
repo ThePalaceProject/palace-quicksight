@@ -31,7 +31,7 @@ pytest = ">=7.2.0"
 pytest-timeout = "*"
 requests-mock = "1.11.0"
 types-python-dateutil = "^2.8.19"
-types-pytz = "^2023.2"
+types-pytz = "^2024.1"
 
 [tool.isort]
 known_first_party = ["core" ]
