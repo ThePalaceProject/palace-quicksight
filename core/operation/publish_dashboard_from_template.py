@@ -130,9 +130,9 @@ class PublishDashboardFromTemplateOperation(BaseOperation):
         result = {
             "status": "success",
             "dashboard_info": {
-                self._dashboard_alias if self._dashboard_alias else self._template_id: [
-                    dashboard_arn
-                ]
+                self._dashboard_alias
+                if self._dashboard_alias
+                else self._template_id: [dashboard_arn]
             },
         }
 
