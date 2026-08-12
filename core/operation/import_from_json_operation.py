@@ -187,9 +187,7 @@ class ImportFromJsonOperation(BaseOperation):
         # The API requires StartAfterDateTime to be in the future, but any
         # padding delays the schedule's first run past every scheduled firing
         # time inside it (a day of padding skips a full day of refreshes), so
-        # keep it small. It must also be timezone-aware: boto3 serializes naive
-        # datetimes as if they were UTC, which on machines west of UTC would
-        # produce a timestamp in the past.
+        # keep it small.
         return datetime.datetime.now(tz=datetime.timezone.utc) + datetime.timedelta(
             minutes=10
         )
