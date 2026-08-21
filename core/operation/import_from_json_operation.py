@@ -183,8 +183,14 @@ class ImportFromJsonOperation(BaseOperation):
             delete_params.update({"ScheduleId": schedule_id})
             self._qs_client.delete_refresh_schedule(**delete_params)
 
-    def _get_tomorrow(self) -> datetime.datetime:
-        return datetime.datetime.now() + datetime.timedelta(days=1)
+    def _get_schedule_start_after(self) -> datetime.datetime:
+        # The API requires StartAfterDateTime to be in the future, but any
+        # padding delays the schedule's first run past every scheduled firing
+        # time inside it (a day of padding skips a full day of refreshes), so
+        # keep it small.
+        return datetime.datetime.now(tz=datetime.timezone.utc) + datetime.timedelta(
+            minutes=10
+        )
 
     def _create_refresh_schedule(self, logical_data_set_name: str, data_set_id: str):
         params = {
@@ -217,8 +223,7 @@ class ImportFromJsonOperation(BaseOperation):
                 schedules = json.loads(dataset_refresh_file.read())["RefreshSchedules"]
 
                 for index, schedule in enumerate(schedules):
-                    start_after_datetime = self._get_tomorrow()
-                    # start after date must be in the future
+                    start_after_datetime = self._get_schedule_start_after()
                     schedule["ScheduleId"] = data_set_id + "-" + str(index)
                     schedule["StartAfterDateTime"] = start_after_datetime
                     schedule_params = {"Schedule": schedule}

@@ -216,12 +216,12 @@ class TestImportTemplateOperation:
         sess = Session()
         qs_client = sess.create_client("quicksight", config=boto_config)
 
-        this_time_tomorrow = datetime.datetime.now()
+        schedule_start_after = datetime.datetime.now()
         with Stubber(qs_client) as stub, patch(
-            "core.operation.import_from_json_operation.ImportFromJsonOperation._get_tomorrow"
+            "core.operation.import_from_json_operation.ImportFromJsonOperation._get_schedule_start_after"
         ) as dt:
 
-            dt.return_value = this_time_tomorrow
+            dt.return_value = schedule_start_after
             stub.add_response(
                 "delete_template",
                 service_response={},
@@ -322,7 +322,7 @@ class TestImportTemplateOperation:
                             "Timezone": "UTC",
                             "TimeOfTheDay": "07:00",
                         },
-                        "StartAfterDateTime": this_time_tomorrow,
+                        "StartAfterDateTime": schedule_start_after,
                         "RefreshType": "INCREMENTAL_REFRESH",
                     },
                 },
