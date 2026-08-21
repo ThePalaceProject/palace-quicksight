@@ -1,6 +1,7 @@
 import json
 import os.path
 import tempfile
+from unittest.mock import patch
 
 import botocore
 from botocore.config import Config
@@ -154,6 +155,23 @@ class TestPublishDashboardFromTemplateOperation:
                     },
                 },
             )
+            # the operation polls until the dashboard version reaches a
+            # terminal status before granting permissions
+            for status in ["CREATION_IN_PROGRESS", "CREATION_SUCCESSFUL"]:
+                qs_stub.add_response(
+                    "describe_dashboard",
+                    service_response={
+                        "Dashboard": {
+                            "DashboardId": template_id,
+                            "Version": {"Status": status},
+                        }
+                    },
+                    expected_params={
+                        "AwsAccountId": account,
+                        "DashboardId": template_id,
+                    },
+                )
+
             group_arn = f"arn:aws:quicksight:::group/{group_name}"
             qs_stub.add_response(
                 "describe_group",
@@ -229,7 +247,12 @@ class TestPublishDashboardFromTemplateOperation:
                 result_key=result_key,
             )
 
-            result = op.execute()
+            with patch(
+                "core.operation.publish_dashboard_from_template.time.sleep"
+            ) as sleep_mock:
+                result = op.execute()
+
+            sleep_mock.assert_called_once()
 
             assert result["status"] == "success"
             assert result["dashboard_info"] == {template_id: [dashboard_arn]}

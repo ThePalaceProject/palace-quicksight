@@ -85,8 +85,9 @@ class PublishDashboardFromTemplateOperation(BaseOperation):
             dashboard_params=parameters
         )
 
-        # pause for a moment to allow the updates to be processed.
-        time.sleep(3)
+        # updating permissions while the dashboard is still being created fails
+        # with a ConflictException, so wait for creation to finish first.
+        self._wait_for_dashboard(dashboard_id=dashboard_id)
 
         # Grant permissions
         # resolve readers group
@@ -178,3 +179,33 @@ class PublishDashboardFromTemplateOperation(BaseOperation):
             )
         else:
             return response["Arn"], response["DashboardId"]
+
+    # create_dashboard/update_dashboard return while the dashboard version is
+    # still building, so poll until it reaches a terminal status.
+    DASHBOARD_STATUS_POLL_INTERVAL_SECONDS = 3
+    DASHBOARD_STATUS_MAX_POLLS = 40
+
+    def _wait_for_dashboard(self, dashboard_id: str) -> None:
+        """
+        Blocks until the dashboard version reaches a terminal status.
+        :param dashboard_id:
+        """
+        for _ in range(self.DASHBOARD_STATUS_MAX_POLLS):
+            response = self._qs_client.describe_dashboard(
+                AwsAccountId=self._aws_account_id, DashboardId=dashboard_id
+            )
+            status = response["Dashboard"]["Version"]["Status"]
+            if status.endswith("_SUCCESSFUL"):
+                return
+            if status.endswith("_FAILED"):
+                raise Exception(
+                    f"Dashboard ({dashboard_id}) failed to publish: status = {status}"
+                )
+            self._log.info(
+                f"Dashboard ({dashboard_id}) not ready yet: status = {status}"
+            )
+            time.sleep(self.DASHBOARD_STATUS_POLL_INTERVAL_SECONDS)
+        raise Exception(
+            f"Dashboard ({dashboard_id}) did not reach a terminal status after "
+            f"{self.DASHBOARD_STATUS_MAX_POLLS * self.DASHBOARD_STATUS_POLL_INTERVAL_SECONDS} seconds"
+        )
